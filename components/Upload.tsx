@@ -59,24 +59,21 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
             <p className="mono-label text-muted">WhatsApp Wrapped</p>
           </span>
         )}
-        <span className="flex items-center gap-4">
-          {userName ? (
-            <a
-              href="/settings"
-              className="mono-label text-primary underline-offset-4 hover:underline"
-            >
-              {userName}
-            </a>
-          ) : (
-            <a
-              href="/sign-in"
-              className="mono-label border border-border px-2.5 py-1.5 text-muted transition-colors hover:border-primary hover:text-primary"
-            >
-              Sign in
-            </a>
-          )}
-          <p className="mono-label text-muted">Vol. {new Date().getFullYear()}</p>
-        </span>
+        {userName ? (
+          <a
+            href="/settings"
+            className="mono-label text-primary underline-offset-4 hover:underline"
+          >
+            {userName}
+          </a>
+        ) : (
+          <a
+            href="/sign-in"
+            className="mono-label border border-border px-2.5 py-1.5 text-muted transition-colors hover:border-primary hover:text-primary"
+          >
+            Sign in
+          </a>
+        )}
       </header>
 
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-6 sm:px-6">
