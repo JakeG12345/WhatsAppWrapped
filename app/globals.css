@@ -85,6 +85,26 @@ input {
   animation: marquee 22s linear infinite;
 }
 
+/* Overworld/museum game animations. */
+@keyframes walkbob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes fadeout {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* Chat transcript surface - kept for MemorableChat / RunningGag / Museum.
    Subtle dot wallpaper like WhatsApp's, on the new darker base. */
 .wa-message-scroll {
