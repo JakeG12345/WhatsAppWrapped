@@ -22,19 +22,19 @@ function formatMessages(messages: ChatMessage[], maxChars = 14000): string {
 }
 
 const EXTRACTION_SCHEMA = `{
-  "monthLabel": string,
+  "chunkLabel": string,
   "moments": [{ "title": string, "date": string, "narrative": string (2-4 sentences, museum-plaque style), "peopleInvolved": string[], "evidenceQuotes": string[] (verbatim quotes from the transcript) }],
   "runningGags": [{ "name": string, "originDate": string, "originQuote": string (verbatim), "timesReferenced": number, "description": string }],
   "standoutQuotes": [{ "sender": string, "text": string (verbatim), "date": string, "context": string }],
   "personalityEvidence": [{ "member": string, "archetype": string (2-4 word noun phrase), "roastLine": string (one sentence), "evidenceQuotes": string[] (verbatim) }]
 }`;
 
-export function buildExtractionPrompt(monthLabel: string, messages: ChatMessage[]): string {
-  return `You are analyzing one month (${monthLabel}) of a WhatsApp group chat export to extract material for an end-of-year "Wrapped" recap.
+export function buildExtractionPrompt(chunkLabel: string, messages: ChatMessage[]): string {
+  return `You are analyzing one segment (${chunkLabel}) of a WhatsApp group chat export to extract material for an end-of-year "Wrapped" recap. This segment is a fixed-size batch of consecutive messages, not necessarily a full calendar period — treat it as a contiguous slice of the conversation.
 
 ${TONE_RULES}
 
-Find, if present in this month's messages:
+Find, if present in this segment's messages:
 - Notable "moments": arguments, running bits that started, chaotic events, plans that went wrong. Only include real events with evidence — do not invent.
 - Running gags: jokes, phrases, or bits that got referenced more than once.
 - Standout quotes: the most unhinged, funny, or memorable single messages.
@@ -47,7 +47,7 @@ ${JSON_RULES}
 Schema:
 ${EXTRACTION_SCHEMA}
 
-Transcript for ${monthLabel}:
+Transcript for ${chunkLabel}:
 ${formatMessages(messages)}`;
 }
 
@@ -63,16 +63,16 @@ const SYNTHESIS_SCHEMA = `{
 export function buildSynthesisPrompt(
   groupName: string,
   members: string[],
-  monthlyJson: string
+  extractionsJson: string
 ): string {
-  return `You are the head curator producing the final "Wrapped" recap for a WhatsApp group chat called "${groupName}". Below is JSON extracted separately from each month of the chat (moments, running gags, standout quotes, personality evidence per member).
+  return `You are the head curator producing the final "Wrapped" recap for a WhatsApp group chat called "${groupName}". Below is JSON extracted separately from each segment of the chat (moments, running gags, standout quotes, personality evidence per member). Segments are consecutive fixed-size batches of messages in chronological order, not calendar months.
 
 ${TONE_RULES}
 
 Your job:
 1. Pick the single best "moment of the year" across the WHOLE chat — the most specific, evidence-backed, funniest or most dramatic one. Write its narrative like a museum exhibit plaque.
 2. Pick the single best running gag across the whole chat (prefer ones referenced many times or that returned after a long absence).
-3. Produce one personality card per member listed below (members: ${members.join(", ")}). Merge evidence across months for the same person. If a member has thin evidence, still give them a plausible archetype grounded in whatever evidence exists — never leave a member out.
+3. Produce one personality card per member listed below (members: ${members.join(", ")}). Merge evidence across segments for the same person. If a member has thin evidence, still give them a plausible archetype grounded in whatever evidence exists — never leave a member out.
 4. Pick the single most unhinged/memorable quote of the year.
 5. Write a short Oscars-style closing speech from the curator to the group, referencing at least one specific person or moment by name.
 
@@ -81,8 +81,8 @@ ${JSON_RULES}
 Schema:
 ${SYNTHESIS_SCHEMA}
 
-Monthly extraction data:
-${monthlyJson}`;
+Segment extraction data:
+${extractionsJson}`;
 }
 
 export const RETRY_REMINDER = `Your previous response was not valid JSON matching the required schema. Respond again with ONLY raw JSON — no markdown fences, no backticks, no commentary, no trailing commas.`;

@@ -15,13 +15,13 @@ import QuoteCard from "@/components/cards/QuoteCard";
 import FinaleCard from "@/components/cards/FinaleCard";
 import ShareCard from "@/components/cards/ShareCard";
 import { parseWhatsAppChat } from "@/lib/parser";
-import { computeChatStats, chunkMessagesByMonth, summarizeByYear } from "@/lib/stats";
+import { computeChatStats, chunkMessagesByCount, summarizeByYear } from "@/lib/stats";
 import { generateMockWrappedResult } from "@/lib/mockData";
-import { extractMonth, synthesize } from "@/lib/analyzeClient";
+import { extractChunk, synthesize } from "@/lib/analyzeClient";
 import type {
   ChatMessage,
   ChatStats,
-  MonthlyExtraction,
+  ChunkExtraction,
   ParseResult,
   WrappedResult,
   YearSummary,
@@ -33,14 +33,15 @@ type AppState =
   | { phase: "analyzing"; label: string }
   | { phase: "ready"; stats: ChatStats; wrapped: WrappedResult };
 
-const MAX_MONTHS = 24;
+const CHUNK_SIZE = 300; // messages per Claude extraction call
+const MAX_CHUNKS = 40;
 const CONCURRENCY = 4;
 const FUN_EMOJI = ["💀", "👀", "😭", "🔥", "🕵️"];
 
 // Runs async work over `items` with at most `limit` in flight at once —
-// per-month Claude calls are independent, so running them one-at-a-time
+// per-chunk Claude calls are independent, so running them one-at-a-time
 // (as the original sequential loop did) multiplied wall-clock time by the
-// number of months for no benefit.
+// number of chunks for no benefit.
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
@@ -61,50 +62,50 @@ async function mapWithConcurrency<T, R>(
 async function runRealAnalysis(
   groupName: string | null,
   members: string[],
-  chunks: { monthLabel: string; messages: ChatMessage[] }[],
+  chunks: { chunkLabel: string; messages: ChatMessage[] }[],
   onProgress: (label: string) => void
 ): Promise<WrappedResult> {
-  const recentChunks = chunks.slice(-MAX_MONTHS);
+  const recentChunks = chunks.slice(-MAX_CHUNKS);
 
   console.log(
-    `[runRealAnalysis] ${chunks.length} months total, analyzing most recent ${recentChunks.length} with concurrency ${CONCURRENCY}:`,
-    recentChunks.map((c) => `${c.monthLabel} (${c.messages.length} msgs)`)
+    `[runRealAnalysis] ${chunks.length} chunks total, analyzing most recent ${recentChunks.length} with concurrency ${CONCURRENCY}:`,
+    recentChunks.map((c) => `${c.chunkLabel} (${c.messages.length} msgs)`)
   );
 
   let completed = 0;
-  onProgress(`Reading ${recentChunks.length} months of chat... ${FUN_EMOJI[0]}`);
+  onProgress(`Reading ${recentChunks.length} batches of chat... ${FUN_EMOJI[0]}`);
 
   const settled = await mapWithConcurrency(recentChunks, CONCURRENCY, async (chunk, i) => {
     console.log(
-      `[runRealAnalysis] starting ${chunk.monthLabel} — ${chunk.messages.length} messages`
+      `[runRealAnalysis] starting ${chunk.chunkLabel} — ${chunk.messages.length} messages`
     );
     const chunkStart = performance.now();
     try {
-      const extraction = await extractMonth(chunk.monthLabel, chunk.messages);
+      const extraction = await extractChunk(chunk.chunkLabel, chunk.messages);
       completed++;
       console.log(
-        `[runRealAnalysis] (${completed}/${recentChunks.length}) finished ${chunk.monthLabel} in ${Math.round(performance.now() - chunkStart)}ms`
+        `[runRealAnalysis] (${completed}/${recentChunks.length}) finished ${chunk.chunkLabel} in ${Math.round(performance.now() - chunkStart)}ms`
       );
       onProgress(
-        `Reading your chat... ${completed}/${recentChunks.length} months ${FUN_EMOJI[i % FUN_EMOJI.length]}`
+        `Reading your chat... ${completed}/${recentChunks.length} batches ${FUN_EMOJI[i % FUN_EMOJI.length]}`
       );
       return extraction;
     } catch (err) {
       completed++;
       console.warn(
-        `[runRealAnalysis] (${completed}/${recentChunks.length}) FAILED ${chunk.monthLabel} after ${Math.round(performance.now() - chunkStart)}ms — skipping`,
+        `[runRealAnalysis] (${completed}/${recentChunks.length}) FAILED ${chunk.chunkLabel} after ${Math.round(performance.now() - chunkStart)}ms — skipping`,
         err
       );
       return null;
     }
   });
 
-  const extractions: MonthlyExtraction[] = settled.filter(
-    (x): x is MonthlyExtraction => x !== null
+  const extractions: ChunkExtraction[] = settled.filter(
+    (x): x is ChunkExtraction => x !== null
   );
 
   if (extractions.length === 0) {
-    throw new Error("No months could be analyzed.");
+    throw new Error("No chunks could be analyzed.");
   }
 
   onProgress("Tallying the receipts...");
@@ -120,7 +121,7 @@ export default function Home() {
 
     const members = Array.from(new Set(messages.map((m) => m.sender)));
     const stats = computeChatStats(messages);
-    const chunks = chunkMessagesByMonth(messages);
+    const chunks = chunkMessagesByCount(messages, CHUNK_SIZE);
 
     let wrapped: WrappedResult;
     try {

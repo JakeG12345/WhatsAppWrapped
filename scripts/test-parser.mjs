@@ -1,7 +1,7 @@
 // Quick manual smoke test for the parser, run with:
 //   npx tsx scripts/test-parser.mjs
 import { parseWhatsAppChat } from "../lib/parser.ts";
-import { computeChatStats, chunkMessagesByMonth } from "../lib/stats.ts";
+import { computeChatStats, chunkMessagesByCount } from "../lib/stats.ts";
 
 const iosSample = `[1/3/26, 9:41:12 PM] Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them.
 [1/3/26, 9:41:12 PM] Alex: yo has anyone seen the kebab shop closed sign
@@ -46,7 +46,7 @@ function run(label, raw) {
     console.log("stats.longestSilence:", stats.longestSilence);
     console.log(
       "chunks:",
-      chunkMessagesByMonth(result.messages).map((c) => `${c.monthLabel}: ${c.messages.length}`)
+      chunkMessagesByCount(result.messages, 5).map((c) => `${c.chunkLabel}: ${c.messages.length}`)
     );
   }
 }

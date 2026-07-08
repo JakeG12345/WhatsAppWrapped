@@ -1,9 +1,9 @@
-import type { ChatMessage, MonthlyExtraction, WrappedResult } from "./types";
+import type { ChatMessage, ChunkExtraction, WrappedResult } from "./types";
 
 async function postAnalyze<T>(body: unknown): Promise<T> {
   const label =
-    (body as { action?: string; monthLabel?: string }).action === "extractMonth"
-      ? `extractMonth:${(body as { monthLabel?: string }).monthLabel}`
+    (body as { action?: string; chunkLabel?: string }).action === "extractChunk"
+      ? `extractChunk:${(body as { chunkLabel?: string }).chunkLabel}`
       : "synthesize";
   const t0 = performance.now();
   console.log(`[analyzeClient] → POST /api/analyze (${label})`, body);
@@ -22,13 +22,13 @@ async function postAnalyze<T>(body: unknown): Promise<T> {
   return data.result as T;
 }
 
-export function extractMonth(
-  monthLabel: string,
+export function extractChunk(
+  chunkLabel: string,
   messages: ChatMessage[]
-): Promise<MonthlyExtraction> {
-  return postAnalyze<MonthlyExtraction>({
-    action: "extractMonth",
-    monthLabel,
+): Promise<ChunkExtraction> {
+  return postAnalyze<ChunkExtraction>({
+    action: "extractChunk",
+    chunkLabel,
     messages: messages.map((m) => ({
       sender: m.sender,
       text: m.text,
@@ -41,7 +41,7 @@ export function extractMonth(
 export function synthesize(
   groupName: string,
   members: string[],
-  extractions: MonthlyExtraction[]
+  extractions: ChunkExtraction[]
 ): Promise<WrappedResult> {
   return postAnalyze<WrappedResult>({
     action: "synthesize",

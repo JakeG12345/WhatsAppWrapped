@@ -181,25 +181,32 @@ export function computeChatStats(messages: ChatMessage[]): ChatStats {
   };
 }
 
-export function chunkMessagesByMonth(
-  messages: ChatMessage[]
-): { monthLabel: string; messages: ChatMessage[] }[] {
-  const chunks = new Map<string, ChatMessage[]>();
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
+function formatChunkLabel(messages: ChatMessage[]): string {
+  const start = messages[0].timestamp;
+  const end = messages[messages.length - 1].timestamp;
+  const full = (d: Date) =>
+    d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const short = (d: Date) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
-  for (const msg of messages) {
-    const key = `${monthNames[msg.timestamp.getMonth()]} ${msg.timestamp.getFullYear()}`;
-    if (!chunks.has(key)) chunks.set(key, []);
-    chunks.get(key)!.push(msg);
+  if (start.toDateString() === end.toDateString()) return full(start);
+  const startStr = start.getFullYear() === end.getFullYear() ? short(start) : full(start);
+  return `${startStr} – ${full(end)}`;
+}
+
+// Splits messages into fixed-size batches rather than calendar months, so
+// prompt size and Claude call latency stay consistent regardless of how
+// bursty any given period of the chat was (a single frantic week could
+// otherwise dwarf a whole quiet month in one request).
+export function chunkMessagesByCount(
+  messages: ChatMessage[],
+  chunkSize = 300
+): { chunkLabel: string; messages: ChatMessage[] }[] {
+  const chunks: { chunkLabel: string; messages: ChatMessage[] }[] = [];
+  for (let i = 0; i < messages.length; i += chunkSize) {
+    const slice = messages.slice(i, i + chunkSize);
+    chunks.push({ chunkLabel: formatChunkLabel(slice), messages: slice });
   }
-
-  return Array.from(chunks.entries()).map(([monthLabel, messages]) => ({
-    monthLabel,
-    messages,
-  }));
+  return chunks;
 }
 
 // Assumes `messages` is already sorted chronologically (parseWhatsAppChat

@@ -102,9 +102,9 @@ export interface PersonalityEvidence {
   evidenceQuotes: string[];
 }
 
-// Output of a single monthly extraction call
-export interface MonthlyExtraction {
-  monthLabel: string;
+// Output of a single chunk (fixed-size message batch) extraction call
+export interface ChunkExtraction {
+  chunkLabel: string;
   moments: MomentCandidate[];
   runningGags: RunningGagCandidate[];
   standoutQuotes: QuoteCandidate[];
@@ -123,7 +123,7 @@ export interface WrappedResult {
 
 export type AnalysisProgressStage =
   | { kind: "parsing" }
-  | { kind: "chunk"; monthLabel: string; index: number; total: number }
+  | { kind: "chunk"; chunkLabel: string; index: number; total: number }
   | { kind: "synthesizing" }
   | { kind: "done" }
   | { kind: "error"; message: string };

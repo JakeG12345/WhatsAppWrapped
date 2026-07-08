@@ -1,12 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { buildExtractionPrompt, buildSynthesisPrompt, RETRY_REMINDER } from "@/lib/prompts";
-import type { ChatMessage, MonthlyExtraction, WrappedResult } from "@/lib/types";
+import type { ChatMessage, ChunkExtraction, WrappedResult } from "@/lib/types";
 
 const MODEL = "claude-sonnet-4-6";
 
 interface ChunkRequestBody {
-  action: "extractMonth";
-  monthLabel: string;
+  action: "extractChunk";
+  chunkLabel: string;
   messages: { sender: string; text: string; timestamp: string; isMedia: boolean }[];
 }
 
@@ -14,16 +14,16 @@ interface SynthesizeRequestBody {
   action: "synthesize";
   groupName: string;
   members: string[];
-  extractions: MonthlyExtraction[];
+  extractions: ChunkExtraction[];
 }
 
 type RequestBody = ChunkRequestBody | SynthesizeRequestBody;
 
-function isMonthlyExtraction(x: unknown): x is MonthlyExtraction {
+function isChunkExtraction(x: unknown): x is ChunkExtraction {
   if (typeof x !== "object" || x === null) return false;
   const o = x as Record<string, unknown>;
   return (
-    typeof o.monthLabel === "string" &&
+    typeof o.chunkLabel === "string" &&
     Array.isArray(o.moments) &&
     Array.isArray(o.runningGags) &&
     Array.isArray(o.standoutQuotes) &&
@@ -164,8 +164,8 @@ export async function POST(request: Request) {
   const requestStart = Date.now();
 
   try {
-    if (body.action === "extractMonth") {
-      const label = `extractMonth:${body.monthLabel}`;
+    if (body.action === "extractChunk") {
+      const label = `extractChunk:${body.chunkLabel}`;
       log(`${label} request received`, { messageCount: body.messages.length });
       const messages: ChatMessage[] = body.messages.map((m) => ({
         sender: m.sender,
@@ -173,14 +173,14 @@ export async function POST(request: Request) {
         isMedia: m.isMedia,
         timestamp: new Date(m.timestamp),
       }));
-      const prompt = buildExtractionPrompt(body.monthLabel, messages);
+      const prompt = buildExtractionPrompt(body.chunkLabel, messages);
       const result = await callClaudeForJson(
         client,
         label,
         SYSTEM_PROMPT,
         prompt,
         4096,
-        isMonthlyExtraction,
+        isChunkExtraction,
         "low"
       );
       log(`${label} done in ${Date.now() - requestStart}ms`, {
