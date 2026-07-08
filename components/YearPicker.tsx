@@ -43,7 +43,7 @@ export default function YearPicker({
                 All time
               </p>
               <p className="mono-label mt-2 opacity-70">
-                {totalMemberCount} members &middot; full archive
+                {`${totalMemberCount} members`} &middot; full archive
               </p>
             </div>
             <p className="shrink-0 font-mono text-sm font-bold tabular-nums">
