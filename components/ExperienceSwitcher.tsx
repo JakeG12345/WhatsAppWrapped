@@ -21,6 +21,8 @@ interface ExperienceSwitcherProps {
   museumProgress?: { discoveredWings: string[]; inspectedExhibits: string[] };
   /** Fired when museum discovery progress changes, for persistence. */
   onMuseumProgressChange?: (visitedRooms: string[], inspected: string[]) => void;
+  /** Which mode to open in (defaults to the lobby). */
+  initialMode?: Mode;
 }
 
 function ModeButton({
@@ -186,8 +188,9 @@ export default function ExperienceSwitcher({
   exitLabel,
   museumProgress,
   onMuseumProgressChange,
+  initialMode,
 }: ExperienceSwitcherProps) {
-  const [mode, setMode] = useState<Mode>("lobby");
+  const [mode, setMode] = useState<Mode>(initialMode ?? "lobby");
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-background">
