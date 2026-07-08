@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import ExportTutorial from "./ExportTutorial";
 
 interface UploadProps {
   onFile: (file: File) => void;
@@ -22,6 +23,7 @@ const MARQUEE_ITEMS = [
 
 export default function Upload({ onFile, error, onBack, userName }: UploadProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
@@ -137,6 +139,14 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
           </p>
         )}
 
+        <button
+          type="button"
+          onClick={() => setShowTutorial(true)}
+          className="mono-label mt-4 w-max border-b border-dashed border-muted pb-0.5 text-muted transition-colors hover:border-primary hover:text-primary"
+        >
+          How do I get the export? →
+        </button>
+
         <p className="mt-5 font-mono text-[10px] leading-relaxed text-muted">
           Parsed in your browser &middot; sent only for analysis &middot; never
           stored
@@ -163,6 +173,8 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
           ))}
         </div>
       </div>
+
+      {showTutorial && <ExportTutorial onClose={() => setShowTutorial(false)} />}
     </main>
   );
 }
