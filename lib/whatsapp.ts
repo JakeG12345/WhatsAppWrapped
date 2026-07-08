@@ -15,6 +15,7 @@ export function whatsappNameColor(sender: string, senderOrder: string[]): string
   return WHATSAPP_NAME_COLORS[idx % WHATSAPP_NAME_COLORS.length];
 }
 
-// WhatsApp dark theme bubbles.
-export const WHATSAPP_SENT_BUBBLE = "bg-[#005C4B] text-[#E9EDEF]";
-export const WHATSAPP_RECEIVED_BUBBLE = "bg-[#202C33] text-[#E9EDEF]";
+// WhatsApp dark theme bubbles - the incoming tone is nudged toward the
+// app's greener near-black base so transcripts sit naturally on it.
+export const WHATSAPP_SENT_BUBBLE = "bg-[#005C4B] text-[#E9EDE9]";
+export const WHATSAPP_RECEIVED_BUBBLE = "bg-[#1D2620] text-[#E9EDE9]";
