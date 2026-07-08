@@ -78,6 +78,7 @@ interface DistrictExperienceProps {
   onAddChat: () => void;
   onSignIn: () => void;
   onSignOut?: () => void;
+  onDeleteEntry?: (entryId: string) => void;
 }
 
 type SheetState =
@@ -98,6 +99,7 @@ export default function DistrictExperience({
   onAddChat,
   onSignIn,
   onSignOut,
+  onDeleteEntry,
 }: DistrictExperienceProps) {
   // --- Derived world -------------------------------------------------------
   const lots = useMemo<MuseumLot[]>(
@@ -709,6 +711,7 @@ export default function DistrictExperience({
           onSignIn={onSignIn}
           onSelectPerson={(person) => setSheet({ kind: "person", person })}
           onClose={() => setSheet({ kind: "none" })}
+          onDeleteEntry={onDeleteEntry}
         />
       )}
     </div>
@@ -813,6 +816,7 @@ function RecordsSheet({
   onSignIn,
   onSelectPerson,
   onClose,
+  onDeleteEntry,
 }: {
   entries: ArchiveEntry[];
   people: DistrictPerson[];
@@ -820,6 +824,7 @@ function RecordsSheet({
   onSignIn: () => void;
   onSelectPerson: (person: DistrictPerson) => void;
   onClose: () => void;
+  onDeleteEntry?: (entryId: string) => void;
 }) {
   const totalMessages = entries.reduce((sum, e) => sum + e.stats.totalMessages, 0);
   const totalWords = entries.reduce((sum, e) => sum + e.stats.totalWords, 0);
@@ -841,6 +846,41 @@ function RecordsSheet({
           <div key={stat.label} className="bg-[#0A0E0B] p-3">
             <p className="mono-label text-[#7D8880]">{stat.label}</p>
             <p className="mt-1 font-mono text-xl font-bold tabular-nums">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mono-label mt-6 border-b border-[#242C25] pb-2 text-[#7D8880]">
+        {`Museums on file (${entries.length})`}
+      </p>
+      <div className="flex flex-col">
+        {entries.map((entry) => (
+          <div
+            key={entry.id}
+            className="flex items-baseline justify-between gap-3 border-b border-[#141D16] py-2.5"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold uppercase tracking-wide">
+                {cleanDisplayCopy(entry.chatName)}
+              </span>
+              <span className="mono-label mt-0.5 block text-[#55605A]">
+                {entry.year ?? "All time"} &middot;{" "}
+                {`${entry.stats.totalMessages.toLocaleString()} msgs`}
+              </span>
+            </span>
+            {onDeleteEntry && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Demolish the ${cleanDisplayCopy(entry.chatName)} museum? This can't be undone.`)) {
+                    onDeleteEntry(entry.id);
+                  }
+                }}
+                className="mono-label shrink-0 border border-[#242C25] px-2 py-1 text-[#7D8880] transition-colors hover:border-red-400 hover:text-red-300"
+              >
+                Demolish
+              </button>
+            )}
           </div>
         ))}
       </div>
