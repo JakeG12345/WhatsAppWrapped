@@ -13,58 +13,60 @@ export default function MemorableChatCard({ moment }: { moment: MomentCandidate 
   const allSenders = Array.from(new Set(moment.exchange.map((t) => t.sender)));
 
   return (
-    <CardShell
-      gradient="wa-card-surface"
-      eyebrow="Most Memorable Chat"
-    >
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-[#8696A0]">{cleanDisplayCopy(moment.date)}</p>
-        <h2 className="text-3xl font-semibold leading-tight">
+    <CardShell eyebrow="Exhibit: The Moment">
+      <div>
+        <p className="mono-label text-primary">{cleanDisplayCopy(moment.date)}</p>
+        <h2 className="mt-2 text-balance text-3xl font-black uppercase leading-[0.98] tracking-tight sm:text-4xl">
           {cleanDisplayCopy(moment.title)}
         </h2>
       </div>
 
-      <div
-        className="wa-message-scroll flex max-h-[52vh] flex-col overflow-y-auto rounded-3xl border border-[#2A3942] p-3"
-      >
-        {moment.exchange.map((turn, i) => {
-          const isMe = turn.sender === me;
-          const prevSameSender = i > 0 && moment.exchange[i - 1].sender === turn.sender;
-          // The "tail" corner (near-square) marks the start of a new
-          // speaker turn; consecutive bubbles from the same sender go
-          // fully rounded there instead, just like WhatsApp's grouping.
-          const tailCorner = isMe
-            ? prevSameSender
-              ? "rounded-br-2xl"
-              : "rounded-br-md"
-            : prevSameSender
-              ? "rounded-bl-2xl"
-              : "rounded-bl-md";
+      {/* The transcript itself stays pure WhatsApp - the frame is the evidence bag */}
+      <div className="border border-border">
+        <div className="flex items-center justify-between border-b border-border bg-surface px-3 py-1.5">
+          <p className="mono-label text-muted">Transcript</p>
+          <p className="mono-label text-muted">Unedited</p>
+        </div>
+        <div className="wa-message-scroll archive-scroll flex max-h-[48vh] flex-col overflow-y-auto p-3">
+          {moment.exchange.map((turn, i) => {
+            const isMe = turn.sender === me;
+            const prevSameSender = i > 0 && moment.exchange[i - 1].sender === turn.sender;
+            // The "tail" corner (near-square) marks the start of a new
+            // speaker turn; consecutive bubbles from the same sender go
+            // fully rounded there instead, just like WhatsApp's grouping.
+            const tailCorner = isMe
+              ? prevSameSender
+                ? "rounded-br-2xl"
+                : "rounded-br-md"
+              : prevSameSender
+                ? "rounded-bl-2xl"
+                : "rounded-bl-md";
 
-          return (
-            <div
-              key={i}
-              className={`flex ${isMe ? "justify-end" : "justify-start"} ${
-                i === 0 ? "" : prevSameSender ? "mt-0.5" : "mt-2"
-              }`}
-            >
+            return (
               <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 shadow-sm ${tailCorner} ${
-                  isMe ? WHATSAPP_SENT_BUBBLE : WHATSAPP_RECEIVED_BUBBLE
+                key={i}
+                className={`flex ${isMe ? "justify-end" : "justify-start"} ${
+                  i === 0 ? "" : prevSameSender ? "mt-0.5" : "mt-2"
                 }`}
               >
-                {!prevSameSender && (
-                  <p
-                    className={`text-xs font-semibold ${whatsappNameColor(turn.sender, allSenders)}`}
-                  >
-                    {cleanDisplayCopy(turn.sender)}
-                  </p>
-                )}
-                <p className="text-sm leading-relaxed">{cleanDisplayCopy(turn.text)}</p>
+                <div
+                  className={`max-w-[80%] rounded-2xl px-3 py-2 shadow-sm ${tailCorner} ${
+                    isMe ? WHATSAPP_SENT_BUBBLE : WHATSAPP_RECEIVED_BUBBLE
+                  }`}
+                >
+                  {!prevSameSender && (
+                    <p
+                      className={`text-xs font-semibold ${whatsappNameColor(turn.sender, allSenders)}`}
+                    >
+                      {cleanDisplayCopy(turn.sender)}
+                    </p>
+                  )}
+                  <p className="text-sm leading-relaxed">{cleanDisplayCopy(turn.text)}</p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </CardShell>
   );

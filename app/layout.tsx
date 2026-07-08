@@ -1,20 +1,27 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Archivo, Space_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "WhatsApp Wrapped",
-  description: "Spotify Wrapped for your group chat",
+  title: "WhatsApp Wrapped - Your Chat, On the Record",
+  description:
+    "Turn a WhatsApp export into an annual report of your group chat: awards, running jokes, quotes, and receipts.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0e0b",
 };
 
 export default function RootLayout({
@@ -25,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${spaceMono.variable} h-full bg-background antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

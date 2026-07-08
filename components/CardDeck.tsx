@@ -40,15 +40,13 @@ export default function CardDeck({ cards, onIndexChange }: CardDeckProps) {
   };
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#0B141A]">
-      <div className="absolute inset-x-0 top-0 z-20 flex gap-1 p-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
+    <div className="relative h-dvh w-full overflow-hidden bg-background">
+      {/* Story progress segments */}
+      <div className="absolute inset-x-0 top-0 z-20 flex gap-px px-5 pt-[calc(env(safe-area-inset-top)+0.65rem)] sm:px-8">
         {cards.map((_, i) => (
-          <div
-            key={i}
-            className="h-1 flex-1 overflow-hidden rounded-full bg-[#2A3942]"
-          >
+          <div key={i} className="h-0.5 flex-1 overflow-hidden bg-border">
             <div
-              className="h-full rounded-full bg-[#25D366] transition-all duration-300 ease-out"
+              className="h-full bg-primary transition-all duration-300 ease-out"
               style={{ width: i <= index ? "100%" : "0%" }}
             />
           </div>
@@ -73,27 +71,30 @@ export default function CardDeck({ cards, onIndexChange }: CardDeckProps) {
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      {/* Deck controls */}
+      <div className="absolute inset-x-0 bottom-0 z-20 flex items-stretch border-t border-border bg-background/90 backdrop-blur-sm">
         <button
           type="button"
           aria-label="Previous card"
           onClick={() => goTo(index - 1)}
           disabled={index === 0}
-          className="rounded-full border border-[#2A3942] bg-[#202C33]/90 px-4 py-2 text-sm font-semibold text-[#E9EDEF] backdrop-blur-sm disabled:opacity-0"
+          className="mono-label flex-1 border-r border-border py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-muted transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
         >
-          Back
+          ← Prev
         </button>
-        <p className="rounded-full bg-[#111B21]/80 px-3 py-1 text-xs font-medium text-[#8696A0]">
-          {index + 1} / {cards.length}
+        <p className="mono-label flex items-center border-r border-border px-4 pb-[env(safe-area-inset-bottom)] tabular-nums text-muted">
+          {String(index + 1).padStart(2, "0")}
+          <span className="mx-1 opacity-50">/</span>
+          {String(cards.length).padStart(2, "0")}
         </p>
         <button
           type="button"
           aria-label="Next card"
           onClick={() => goTo(index + 1)}
           disabled={index === cards.length - 1}
-          className="rounded-full bg-[#00A884] px-4 py-2 text-sm font-bold text-[#06130D] backdrop-blur-sm disabled:opacity-0"
+          className="mono-label flex-1 bg-primary py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-primary-ink transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-0"
         >
-          Next
+          Next →
         </button>
       </div>
     </div>

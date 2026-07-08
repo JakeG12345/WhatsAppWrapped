@@ -17,10 +17,6 @@ interface ExperienceSwitcherProps {
   onReset: () => void;
 }
 
-function formatCount(n: number): string {
-  return n.toLocaleString();
-}
-
 function ModeButton({
   active,
   children,
@@ -34,10 +30,10 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+      className={`mono-label px-3 py-2 transition-colors ${
         active
-          ? "bg-[#00A884] text-[#06130D]"
-          : "border border-[#2A3942] bg-[#202C33]/92 text-[#E9EDEF]"
+          ? "bg-[#25D366] text-[#04140A]"
+          : "text-[#7D8880] hover:text-[#E9EDE9]"
       }`}
     >
       {children}
@@ -55,8 +51,8 @@ function TopNav({
   onReset: () => void;
 }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+1.1rem)] z-50 flex items-center justify-between gap-2 px-3">
-      <div className="pointer-events-auto flex gap-1 rounded-full border border-[#2A3942] bg-[#111B21]/88 p-1 shadow-lg backdrop-blur-md">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.9rem)] z-50 flex items-center justify-between gap-2 px-3">
+      <div className="pointer-events-auto flex border border-[#242C25] bg-[#0A0E0B]/92 shadow-lg backdrop-blur-md">
         <ModeButton active={mode === "lobby"} onClick={() => setMode("lobby")}>
           Lobby
         </ModeButton>
@@ -71,7 +67,7 @@ function TopNav({
       <button
         type="button"
         onClick={onReset}
-        className="pointer-events-auto rounded-full border border-[#2A3942] bg-[#202C33]/92 px-3 py-2 text-xs font-semibold text-[#E9EDEF] shadow-lg backdrop-blur-md"
+        className="mono-label pointer-events-auto border border-[#242C25] bg-[#0A0E0B]/92 px-3 py-2 text-[#7D8880] shadow-lg backdrop-blur-md transition-colors hover:text-[#E9EDE9]"
       >
         Reset
       </button>
@@ -93,77 +89,83 @@ function RecapLobby({
   const groupName = cleanDisplayCopy(wrapped.groupName);
   const topSender = stats.yapper?.name ? cleanDisplayCopy(stats.yapper.name) : "None";
   const topMoment = cleanDisplayCopy(wrapped.momentOfTheYear.title);
+  const year = stats.dateRange.end.getFullYear();
 
   return (
-    <div className="wa-screen flex h-dvh w-full flex-col items-center justify-center px-5 pb-7 pt-[calc(env(safe-area-inset-top)+5rem)] text-[#E9EDEF]">
-      <div className="flex w-full max-w-md flex-col gap-4">
-        <div className="wa-panel overflow-hidden rounded-[2rem]">
-          <div className="flex items-center gap-3 border-b border-[#2A3942] bg-[#202C33] px-5 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00A884] text-sm font-black text-[#06130D]">
-              WA
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-base font-semibold">{groupName}</p>
-              <p className="text-xs text-[#8696A0]">
-                {stats.dateRange.end.getFullYear()} archive ready
-              </p>
-            </div>
+    <main className="grain relative flex h-dvh w-full flex-col bg-background text-foreground">
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-end px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+4.5rem)] sm:px-6">
+        {/* Masthead */}
+        <div className="relative z-10">
+          <p className="mono-label text-primary">Archive ready &middot; {year}</p>
+          <h1 className="mt-2 text-balance text-[13vw] font-black uppercase leading-[0.9] tracking-tight sm:text-6xl">
+            {groupName}
+          </h1>
+        </div>
+
+        {/* Docket */}
+        <div className="relative z-10 mt-6 border-t border-border">
+          <div className="flex items-baseline justify-between border-b border-border py-2.5">
+            <p className="mono-label text-muted">Messages on file</p>
+            <p className="font-mono text-lg font-bold tabular-nums">
+              {stats.totalMessages.toLocaleString()}
+            </p>
           </div>
-
-          <div className="wa-wallpaper flex min-h-[48vh] flex-col justify-between gap-6 p-5">
-            <div className="flex flex-col gap-3">
-              <p className="wa-kicker">Recap Lobby</p>
-              <h1 className="text-4xl font-semibold leading-tight">
-                The chat has entered the archive.
-              </h1>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="wa-soft-panel rounded-2xl p-3">
-                <p className="text-2xl font-semibold tabular-nums">
-                  {formatCount(stats.totalMessages)}
-                </p>
-                <p className="text-xs text-[#8696A0]">messages</p>
-              </div>
-              <div className="wa-soft-panel rounded-2xl p-3">
-                <p className="truncate text-lg font-semibold">{topSender}</p>
-                <p className="text-xs text-[#8696A0]">top sender</p>
-              </div>
-              <div className="wa-soft-panel col-span-2 rounded-2xl p-3">
-                <p className="truncate text-lg font-semibold">{topMoment}</p>
-                <p className="text-xs text-[#8696A0]">featured exhibit</p>
-              </div>
-            </div>
+          <div className="flex items-baseline justify-between gap-4 border-b border-border py-2.5">
+            <p className="mono-label shrink-0 text-muted">Top sender</p>
+            <p className="truncate text-sm font-bold uppercase tracking-wide">
+              {topSender}
+            </p>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 border-b border-border py-2.5">
+            <p className="mono-label shrink-0 text-muted">Featured exhibit</p>
+            <p className="truncate text-sm font-bold uppercase tracking-wide">
+              {topMoment}
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Two doors */}
+        <div className="relative z-10 mt-5 grid grid-cols-2 gap-px border border-border bg-border">
           <button
             type="button"
             onClick={onWrapped}
-            className="wa-panel rounded-3xl p-4 text-left transition-transform active:scale-[0.98]"
+            className="group flex flex-col gap-8 bg-primary p-4 text-left text-primary-ink transition-opacity hover:opacity-90"
           >
-            <p className="wa-kicker">Story</p>
-            <p className="mt-2 text-xl font-semibold">Wrapped Deck</p>
-            <p className="mt-1 text-xs leading-5 text-[#8696A0]">
-              Awards, quotes, stats
-            </p>
+            <span className="mono-label opacity-70">01 / Story</span>
+            <span>
+              <span className="block text-2xl font-black uppercase leading-none tracking-tight">
+                Wrapped
+                <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">
+                  →
+                </span>
+              </span>
+              <span className="mono-label mt-2 block opacity-70">
+                Awards &middot; quotes &middot; stats
+              </span>
+            </span>
           </button>
 
           <button
             type="button"
             onClick={onMuseum}
-            className="rounded-3xl border border-[#00A884]/60 bg-[#003F34] p-4 text-left shadow-[0_18px_60px_rgba(0,168,132,0.18)] transition-transform active:scale-[0.98]"
+            className="group flex flex-col gap-8 bg-background p-4 text-left transition-colors hover:bg-surface"
           >
-            <p className="wa-kicker">Museum</p>
-            <p className="mt-2 text-xl font-semibold">Lore Tour</p>
-            <p className="mt-1 text-xs leading-5 text-[#D9FDD3]">
-              Rooms, receipts, photos
-            </p>
+            <span className="mono-label text-muted">02 / Museum</span>
+            <span>
+              <span className="block text-2xl font-black uppercase leading-none tracking-tight">
+                Lore tour
+                <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">
+                  →
+                </span>
+              </span>
+              <span className="mono-label mt-2 block text-muted">
+                Rooms &middot; receipts &middot; photos
+              </span>
+            </span>
           </button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -177,7 +179,7 @@ export default function ExperienceSwitcher({
   const [mode, setMode] = useState<Mode>("lobby");
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#0B141A]">
+    <div className="relative h-dvh w-full overflow-hidden bg-background">
       <TopNav mode={mode} setMode={setMode} onReset={onReset} />
       {mode === "lobby" && (
         <RecapLobby

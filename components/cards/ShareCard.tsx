@@ -15,6 +15,7 @@ export default function ShareCard({ stats, wrapped }: ShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"idle" | "working" | "error">("idle");
   const groupName = cleanDisplayCopy(wrapped.groupName);
+  const year = stats.dateRange.end.getFullYear();
 
   async function handleDownload() {
     if (!cardRef.current) return;
@@ -40,73 +41,66 @@ export default function ShareCard({ stats, wrapped }: ShareCardProps) {
   return (
     <CardShell
       ref={cardRef}
-      gradient="wa-card-surface"
+      className="bg-[#25D366] text-[#04140A]"
+      eyebrow="The verdict"
     >
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#00A884] text-sm font-black text-[#06130D]">
-          WA
-        </div>
-        <div className="min-w-0">
-          <p className="wa-kicker">
-            {stats.dateRange.end.getFullYear()} recap
-          </p>
-          <h2 className="truncate text-3xl font-semibold leading-tight">
-            {groupName}
-          </h2>
-        </div>
+      {/* Poster masthead */}
+      <div>
+        <p className="text-[24vw] font-black leading-[0.82] tracking-tighter tabular-nums sm:text-9xl">
+          {year}
+        </p>
+        <h2 className="mt-1 text-balance text-3xl font-black uppercase leading-[0.95] tracking-tight sm:text-4xl">
+          {groupName}
+        </h2>
+        <p className="mono-label mt-2 opacity-70">Wrapped &middot; case closed</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="wa-soft-panel rounded-2xl p-3">
-          <p className="text-2xl font-semibold tabular-nums">
+      {/* Ledger */}
+      <div className="border-t-2 border-[#04140A]">
+        <div className="flex items-baseline justify-between border-b border-[#04140A]/30 py-2.5">
+          <p className="mono-label opacity-70">Messages</p>
+          <p className="font-mono text-xl font-bold tabular-nums">
             {stats.totalMessages.toLocaleString()}
           </p>
-          <p className="text-xs text-[#8696A0]">messages</p>
         </div>
-        <div className="wa-soft-panel rounded-2xl p-3">
-          <p className="text-2xl font-semibold tabular-nums">{stats.members.length}</p>
-          <p className="text-xs text-[#8696A0]">members</p>
+        <div className="flex items-baseline justify-between border-b border-[#04140A]/30 py-2.5">
+          <p className="mono-label opacity-70">Members</p>
+          <p className="font-mono text-xl font-bold tabular-nums">
+            {stats.members.length}
+          </p>
         </div>
-        <div className="wa-soft-panel rounded-2xl p-3">
-          <p className="truncate text-lg font-semibold">
+        <div className="flex items-baseline justify-between gap-4 border-b border-[#04140A]/30 py-2.5">
+          <p className="mono-label shrink-0 opacity-70">Top sender</p>
+          <p className="truncate text-base font-black uppercase tracking-tight">
             {stats.yapper?.name ? cleanDisplayCopy(stats.yapper.name) : "None"}
           </p>
-          <p className="text-xs text-[#8696A0]">top sender</p>
         </div>
-        <div className="wa-soft-panel rounded-2xl p-3">
-          <p className="truncate text-lg font-semibold">
-            {stats.airballs[0]?.name ? cleanDisplayCopy(stats.airballs[0].name) : "None"}
+        <div className="flex items-baseline justify-between gap-4 border-b-2 border-[#04140A] py-2.5">
+          <p className="mono-label shrink-0 opacity-70">Moment</p>
+          <p className="truncate text-base font-black uppercase tracking-tight">
+            {cleanDisplayCopy(wrapped.momentOfTheYear.title)}
           </p>
-          <p className="text-xs text-[#8696A0]">silence starts</p>
         </div>
       </div>
 
-      <div className="wa-panel rounded-3xl p-4">
-        <p className="wa-kicker">
-          Most Memorable Chat
-        </p>
-        <p className="mt-2 text-lg font-semibold leading-snug">
-          {cleanDisplayCopy(wrapped.momentOfTheYear.title)}
-        </p>
+      <div data-export-ignore="true" className="flex flex-col items-start gap-2">
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={status === "working"}
+          className="mono-label bg-[#04140A] px-6 py-3.5 text-[#25D366] transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
+        >
+          {status === "working" ? "Preparing…" : "↓ Download poster"}
+        </button>
+        {status === "error" && (
+          <p className="font-mono text-xs">
+            Couldn&apos;t generate the image. Try again or take a screenshot.
+          </p>
+        )}
       </div>
 
-      <button
-        type="button"
-        onClick={handleDownload}
-        disabled={status === "working"}
-        data-export-ignore="true"
-        className="wa-action rounded-full px-5 py-2.5 text-sm font-bold shadow-lg disabled:opacity-60"
-      >
-        {status === "working" ? "Preparing" : "Download image"}
-      </button>
-      {status === "error" && (
-        <p data-html2canvas-ignore="true" className="text-center text-xs text-red-200">
-          Couldn&apos;t generate the image. Try again or take a screenshot.
-        </p>
-      )}
-
-      <p className="text-center text-xs text-[#8696A0]">
-        WhatsApp Wrapped | share this to the chat
+      <p className="mono-label opacity-70">
+        WhatsApp Wrapped &middot; send it back to the chat
       </p>
     </CardShell>
   );

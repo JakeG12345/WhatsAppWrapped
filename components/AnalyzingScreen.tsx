@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const STATUS_LINES = [
-  "Reading the export",
-  "Finding running jokes",
-  "Pulling real quotes",
-  "Writing the recap",
+  "reading the export",
+  "cross-referencing running jokes",
+  "pulling quotes into evidence",
+  "counting who got left on read",
+  "drafting the awards speech",
 ];
 
 // Classic "fake" progress: climbs fast at first, then decelerates and
@@ -31,13 +32,13 @@ interface AnalyzingScreenProps {
 }
 
 export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScreenProps) {
-  const [statusLine, setStatusLine] = useState(STATUS_LINES[0]);
+  const [lineIndex, setLineIndex] = useState(0);
   const [percent, setPercent] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setStatusLine(STATUS_LINES[Math.floor(Math.random() * STATUS_LINES.length)]);
-    }, 1400);
+      setLineIndex((i) => (i + 1) % STATUS_LINES.length);
+    }, 1600);
     return () => clearInterval(id);
   }, []);
 
@@ -57,48 +58,73 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
     Math.floor((percent / CAP) * totalMessages) + 1
   );
 
-  const label =
+  const stageLabel =
     stage === "reading"
-      ? `Reading ${messagesRead.toLocaleString()} of ${totalMessages.toLocaleString()} messages`
+      ? "Reading messages"
       : stage === "tallying"
         ? "Compiling the verdict"
-        : "Writing the awards speech";
+        : "Writing the awards";
 
   return (
-    <div className="wa-screen flex h-dvh w-full flex-col items-center justify-center px-6 text-center text-[#E9EDEF]">
-      <div className="wa-panel flex w-full max-w-sm flex-col gap-6 rounded-[2rem] p-6">
-        <div className="flex items-center gap-3 border-b border-[#2A3942] pb-4 text-left">
-          <div className="h-10 w-10 rounded-full bg-[#00A884]" />
-          <div>
-            <p className="text-sm font-semibold">WhatsApp Wrapped</p>
-            <p className="text-xs text-[#8696A0]">{statusLine}</p>
-          </div>
+    <main className="flex h-dvh w-full flex-col bg-background text-foreground">
+      <header className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
+        <p className="mono-label text-muted">WhatsApp Wrapped</p>
+        <p className="mono-label flex items-center gap-2 text-primary">
+          <motion.span
+            className="inline-block h-1.5 w-1.5 rounded-full bg-primary"
+            animate={{ opacity: [1, 0.2, 1] }}
+            transition={{ repeat: Infinity, duration: 1.2 }}
+          />
+          Processing
+        </p>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 sm:px-6">
+        {/* Giant percent readout */}
+        <div className="flex items-end justify-between border-b border-border pb-4">
+          <p className="text-[26vw] font-black leading-[0.85] tracking-tighter tabular-nums sm:text-9xl">
+            {Math.floor(percent)}
+            <span className="text-primary">%</span>
+          </p>
+          <p className="mono-label pb-2 text-right text-muted">
+            {stageLabel}
+          </p>
         </div>
 
-        <div className="flex flex-col gap-2 text-left">
-          <div className="w-fit rounded-2xl rounded-bl-md bg-[#202C33] px-4 py-3 shadow-sm">
-            <p className="text-sm font-medium">{label}</p>
-            <div className="mt-2 flex gap-1">
-              {[0, 1, 2].map((dot) => (
-                <motion.span
-                  key={dot}
-                  className="h-1.5 w-1.5 rounded-full bg-[#8696A0]"
-                  animate={{ opacity: [0.35, 1, 0.35] }}
-                  transition={{ repeat: Infinity, duration: 1.2, delay: dot * 0.18 }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="h-2 overflow-hidden rounded-full bg-[#2A3942]">
+        {/* Progress rule */}
+        <div className="mt-4 h-1 w-full bg-border" role="progressbar" aria-valuenow={Math.floor(percent)} aria-valuemin={0} aria-valuemax={100}>
           <motion.div
-            className="h-full rounded-full bg-[#00A884]"
+            className="h-full bg-primary"
             animate={{ width: `${percent}%` }}
             transition={{ ease: "easeOut", duration: 0.2 }}
           />
         </div>
+
+        {/* Log ticker */}
+        <div className="mt-8 border-l-2 border-primary pl-4">
+          <p className="font-mono text-xs text-muted" aria-live="polite">
+            <span className="text-primary">&gt;</span>{" "}
+            {STATUS_LINES[lineIndex]}
+            <motion.span
+              className="ml-0.5 inline-block h-3 w-1.5 translate-y-0.5 bg-primary"
+              animate={{ opacity: [1, 0] }}
+              transition={{ repeat: Infinity, duration: 0.8 }}
+            />
+          </p>
+          {totalMessages > 0 && stage === "reading" && (
+            <p className="mt-2 font-mono text-xs tabular-nums text-muted">
+              {messagesRead.toLocaleString()} / {totalMessages.toLocaleString()}{" "}
+              messages
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+
+      <footer className="receipt-edge px-4 py-3 sm:px-6">
+        <p className="mono-label text-center text-muted">
+          Do not close the tab &middot; the jury is deliberating
+        </p>
+      </footer>
+    </main>
   );
 }

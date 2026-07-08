@@ -1,34 +1,44 @@
 import CardShell from "./CardShell";
 import type { QuoteCandidate } from "@/lib/types";
 import { cleanDisplayCopy } from "@/lib/copy";
-import { WHATSAPP_RECEIVED_BUBBLE } from "@/lib/whatsapp";
-
-const NAME_COLOR = "text-[#53BDEB]";
 
 export default function QuoteCard({ quote }: { quote: QuoteCandidate }) {
+  const text = cleanDisplayCopy(quote.text);
+  // Short quotes earn poster-scale type; long ones step down to stay on-card.
+  const sizeClass =
+    text.length <= 60
+      ? "text-4xl sm:text-5xl"
+      : text.length <= 140
+        ? "text-3xl sm:text-4xl"
+        : "text-2xl sm:text-3xl";
+
   return (
-    <CardShell
-      gradient="wa-card-surface"
-      eyebrow="Quote of the Year"
-    >
-      <div className="flex flex-col items-center gap-4 text-center">
-        <span className="rounded-full border border-[#2A3942] bg-[#111B21] px-3 py-1 text-[10px] font-medium text-[#8696A0]">
-          {cleanDisplayCopy(quote.date)}
-        </span>
-        <div
-          className={`max-w-[88%] rounded-2xl rounded-bl-md px-4 py-3 text-left shadow-lg ${WHATSAPP_RECEIVED_BUBBLE}`}
+    <CardShell eyebrow="Quote of the year">
+      <div className="flex flex-col">
+        <span
+          aria-hidden="true"
+          className="font-mono text-7xl font-bold leading-none text-primary"
         >
-          <p className={`text-xs font-semibold ${NAME_COLOR}`}>
+          &ldquo;
+        </span>
+        <blockquote
+          className={`text-balance font-black leading-[1.05] tracking-tight ${sizeClass}`}
+        >
+          {text}
+        </blockquote>
+        <div className="mt-6 flex items-baseline gap-3 border-t border-border pt-4">
+          <cite className="not-italic text-lg font-black uppercase tracking-tight text-primary">
             {cleanDisplayCopy(quote.sender)}
-          </p>
-          <p className="text-lg font-semibold leading-snug">
-            {cleanDisplayCopy(quote.text)}
-          </p>
+          </cite>
+          <span className="mono-label text-muted">
+            {cleanDisplayCopy(quote.date)}
+          </span>
         </div>
-        <p className="max-w-sm text-sm leading-6 text-[#8696A0]">
-          {cleanDisplayCopy(quote.context)}
-        </p>
       </div>
+
+      <p className="max-w-md font-mono text-xs leading-relaxed text-muted">
+        {cleanDisplayCopy(quote.context)}
+      </p>
     </CardShell>
   );
 }

@@ -18,54 +18,69 @@ export default function YearPicker({
   onSelect,
 }: YearPickerProps) {
   return (
-    <div className="wa-screen flex h-dvh w-full flex-col items-center px-5 pb-6 pt-[calc(env(safe-area-inset-top)+1.25rem)] text-[#E9EDEF]">
-      <div className="flex w-full max-w-md flex-col gap-1">
-        <p className="wa-kicker">WhatsApp Wrapped</p>
-        <h1 className="text-3xl font-semibold leading-tight">Choose the recap range</h1>
-        <p className="text-sm leading-6 text-[#AEBAC1]">
-          Pick one year, or include every message in the export.
-        </p>
-      </div>
+    <main className="flex h-dvh w-full flex-col bg-background text-foreground">
+      <header className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
+        <p className="mono-label text-muted">WhatsApp Wrapped</p>
+        <p className="mono-label text-muted">Select volume</p>
+      </header>
 
-      <div className="mt-6 flex w-full max-w-md flex-1 flex-col overflow-hidden rounded-3xl border border-[#2A3942] bg-[#111B21]">
-        <button
-          type="button"
-          onClick={() => onSelect("all")}
-          className="flex items-center justify-between gap-4 border-b border-[#2A3942] bg-[#202C33] p-4 text-left transition-colors hover:bg-[#26343D]"
-        >
-          <div className="min-w-0">
-            <p className="text-base font-semibold">All time</p>
-            <p className="text-xs text-[#8696A0]">
-              {totalMemberCount} members, every message in the export
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col overflow-hidden px-4 sm:px-6">
+        <div className="py-6">
+          <p className="mono-label text-primary">Table of contents</p>
+          <h1 className="mt-2 text-balance text-4xl font-black uppercase leading-none tracking-tight">
+            Pick the era
+          </h1>
+        </div>
+
+        <div className="archive-scroll flex flex-1 flex-col overflow-y-auto border-t border-border pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <button
+            type="button"
+            onClick={() => onSelect("all")}
+            className="group flex items-center justify-between gap-4 border-b border-border bg-primary px-4 py-5 text-left text-primary-ink transition-opacity hover:opacity-90"
+          >
+            <div className="min-w-0">
+              <p className="text-3xl font-black uppercase leading-none tracking-tight">
+                All time
+              </p>
+              <p className="mono-label mt-2 opacity-70">
+                {totalMemberCount} members &middot; full archive
+              </p>
+            </div>
+            <p className="shrink-0 font-mono text-sm font-bold tabular-nums">
+              {totalMessageCount.toLocaleString()}
+              <span className="ml-1 opacity-60">msgs</span>
             </p>
-          </div>
-          <p className="shrink-0 rounded-full bg-[#00A884] px-3 py-1 text-sm font-bold text-[#06130D]">
-            {totalMessageCount.toLocaleString()}
-          </p>
-        </button>
+          </button>
 
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          {years.map((y) => (
+          {years.map((y, i) => (
             <button
               key={y.year}
               type="button"
               onClick={() => onSelect(y.year)}
-              className="flex items-center justify-between gap-4 border-b border-[#2A3942] p-4 text-left transition-colors last:border-0 hover:bg-[#182229]"
+              className="group flex items-center justify-between gap-4 border-b border-border px-4 py-5 text-left transition-colors hover:bg-surface"
             >
-              <div className="min-w-0">
-                <p className="text-base font-semibold">{y.year}</p>
-                <p className="truncate text-xs text-[#8696A0]">
-                  {y.memberCount} members, {formatShortDate(y.dateRange.start)} to{" "}
-                  {formatShortDate(y.dateRange.end)}
-                </p>
+              <div className="flex min-w-0 items-baseline gap-4">
+                <span className="font-mono text-[10px] text-muted">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-3xl font-black leading-none tracking-tight tabular-nums transition-colors group-hover:text-primary">
+                    {y.year}
+                  </p>
+                  <p className="mono-label mt-2 truncate text-muted">
+                    {y.memberCount} members &middot;{" "}
+                    {formatShortDate(y.dateRange.start)} –{" "}
+                    {formatShortDate(y.dateRange.end)}
+                  </p>
+                </div>
               </div>
-              <p className="shrink-0 text-sm font-semibold tabular-nums text-[#25D366]">
+              <p className="shrink-0 font-mono text-sm font-bold tabular-nums text-primary">
                 {y.messageCount.toLocaleString()}
               </p>
             </button>
           ))}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
