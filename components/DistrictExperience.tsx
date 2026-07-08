@@ -650,9 +650,13 @@ export default function DistrictExperience({
           <button
             type="button"
             onClick={() => setLightsOn((v) => !v)}
-            className="mono-label border border-[#242C25] bg-[#0A0E0B]/92 px-2.5 py-1.5 text-[#7D8880] backdrop-blur-md transition-colors hover:text-[#E9EDE9]"
+            className={`mono-label border px-2.5 py-1.5 shadow-lg backdrop-blur-md transition-colors ${
+              lightsOn
+                ? "border-[#25D366] bg-[#25D366] text-[#06130D]"
+                : "border-[#242C25] bg-[#0A0E0B]/92 text-[#7D8880] hover:text-[#E9EDE9]"
+            }`}
           >
-            {lightsOn ? "Lights off" : "Lights on"}
+            {lightsOn ? "Lights on" : "Lights off"}
           </button>
         </div>
       </div>

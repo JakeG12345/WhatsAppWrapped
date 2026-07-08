@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import ExportTutorial from "./ExportTutorial";
 
 interface UploadProps {
   onFile: (file: File) => void;
@@ -17,11 +18,12 @@ const MARQUEE_ITEMS = [
   "QUOTE OF THE YEAR",
   "RUNNING GAGS",
   "PERSONALITY AWARDS",
-  "THE RECEIPTS",
+  "THE EVIDENCE",
 ];
 
 export default function Upload({ onFile, error, onBack, userName }: UploadProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
@@ -46,32 +48,47 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
             ← District
           </button>
         ) : (
-          <p className="mono-label text-muted">WhatsApp Wrapped</p>
+          <span className="flex items-center gap-2">
+            <img
+              src="/brand/whatsapp.svg"
+              alt=""
+              width={16}
+              height={16}
+              className="h-4 w-4"
+            />
+            <p className="mono-label text-muted">WhatsApp Wrapped</p>
+          </span>
         )}
-        <span className="flex items-center gap-4">
-          {userName ? (
-            <a
-              href="/settings"
-              className="mono-label text-primary underline-offset-4 hover:underline"
-            >
-              {userName}
-            </a>
-          ) : (
-            <a
-              href="/sign-in"
-              className="mono-label border border-border px-2.5 py-1.5 text-muted transition-colors hover:border-primary hover:text-primary"
-            >
-              Sign in
-            </a>
-          )}
-          <p className="mono-label text-muted">Vol. {new Date().getFullYear()}</p>
-        </span>
+        {userName ? (
+          <a
+            href="/settings"
+            className="mono-label text-primary underline-offset-4 hover:underline"
+          >
+            {userName}
+          </a>
+        ) : (
+          <a
+            href="/sign-in"
+            className="mono-label border border-border px-2.5 py-1.5 text-muted transition-colors hover:border-primary hover:text-primary"
+          >
+            Sign in
+          </a>
+        )}
       </header>
 
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-6 sm:px-6">
         {/* Headline block */}
         <div>
-          <p className="mono-label text-primary">The annual report</p>
+          <p className="mono-label flex items-center gap-2 text-primary">
+            <img
+              src="/brand/whatsapp.svg"
+              alt="WhatsApp"
+              width={18}
+              height={18}
+              className="h-[18px] w-[18px]"
+            />
+            The annual report
+          </p>
           <h1 className="mt-3 text-balance text-[13vw] font-black uppercase leading-[0.92] tracking-tight sm:text-6xl">
             Your chat,
             <br />
@@ -137,6 +154,14 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
           </p>
         )}
 
+        <button
+          type="button"
+          onClick={() => setShowTutorial(true)}
+          className="mono-label mt-4 w-max border-b border-dashed border-muted pb-0.5 text-muted transition-colors hover:border-primary hover:text-primary"
+        >
+          How do I get the export? →
+        </button>
+
         <p className="mt-5 font-mono text-[10px] leading-relaxed text-muted">
           Parsed in your browser &middot; sent only for analysis &middot; never
           stored
@@ -163,6 +188,8 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
           ))}
         </div>
       </div>
+
+      {showTutorial && <ExportTutorial onClose={() => setShowTutorial(false)} />}
     </main>
   );
 }

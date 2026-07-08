@@ -169,7 +169,7 @@ function RecapLobby({
                 </span>
               </span>
               <span className="mono-label mt-2 block text-muted">
-                Rooms &middot; receipts &middot; photos
+                Rooms &middot; evidence &middot; photos
               </span>
             </span>
           </button>
