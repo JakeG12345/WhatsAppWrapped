@@ -129,7 +129,7 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
         </div>
       </div>
 
-      <footer className="receipt-edge px-4 py-3 sm:px-6">
+      <footer className="ticket-edge px-4 py-3 sm:px-6">
         <p className="mono-label text-center text-muted">
           Do not close the tab &middot; the jury is deliberating
         </p>

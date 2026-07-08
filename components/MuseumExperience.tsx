@@ -110,7 +110,7 @@ function buildRooms(hasPhotos: boolean): Room[] {
     { id: "canon", title: "Canon Gallery", label: "WING 02", x: 426, y: 72, w: 428, h: 246, accent: "#25D366" },
     {
       id: "photos",
-      title: hasPhotos ? "Camera Room" : "Receipt Wall",
+      title: hasPhotos ? "Camera Room" : "Evidence Wall",
       label: "WING 03",
       x: 916,
       y: 96,
@@ -178,10 +178,10 @@ function buildExhibits(
   }));
 
   const fallbackPhotoExhibit: Exhibit = {
-    id: "receipts",
+    id: "evidence",
     roomId: "photos",
     kind: "photos",
-    title: "Receipt Wall",
+    title: "Evidence Wall",
     subtitle: stats.topEmojisOverall.length > 0 ? "Emoji evidence" : "Text-only export",
     x: 978,
     y: 148,
@@ -576,7 +576,7 @@ function ExhibitObject({
         {exhibit.kind === "photos" && !exhibit.imageUrl && (
           <div className="flex h-full flex-col justify-center">
             <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#6BCF9C]">
-              Receipts
+              Evidence
             </p>
             <div className="mt-2 flex flex-wrap gap-1">
               {stats.topEmojisOverall.slice(0, 6).map((emoji) => (
@@ -778,7 +778,7 @@ function ExhibitDetail({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm leading-6 text-[#AEBAC1]">
-          This export has no image files, so the wall is built from message receipts instead.
+          This export has no image files, so the wall is built from message evidence instead.
         </p>
         <div className="flex flex-wrap gap-2">
           {stats.topEmojisOverall.length > 0 ? (

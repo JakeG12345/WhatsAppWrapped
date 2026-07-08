@@ -17,7 +17,7 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "WhatsApp Wrapped - Your Chat, On the Record",
   description:
-    "Turn a WhatsApp export into an annual report of your group chat: awards, running jokes, quotes, and receipts.",
+    "Turn a WhatsApp export into an annual report of your group chat: awards, running jokes, quotes, and evidence.",
   icons: {
     icon: "/brand/whatsapp.svg",
   },

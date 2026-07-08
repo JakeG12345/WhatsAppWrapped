@@ -18,7 +18,7 @@ const MARQUEE_ITEMS = [
   "QUOTE OF THE YEAR",
   "RUNNING GAGS",
   "PERSONALITY AWARDS",
-  "THE RECEIPTS",
+  "THE EVIDENCE",
 ];
 
 export default function Upload({ onFile, error, onBack, userName }: UploadProps) {

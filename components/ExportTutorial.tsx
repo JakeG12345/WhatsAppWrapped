@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * CSS-drawn WhatsApp UI vignette - no screenshots needed.
  */
 
-type Platform = "ios" | "android";
+type Platform = "ios" | "android" | "desktop";
 
 /* ---------- Mini WhatsApp UI vignettes (pure CSS, no images) ---------- */
 
@@ -159,9 +159,116 @@ function VignetteShare() {
   );
 }
 
+/* ---------------------- Desktop vignettes (CSS-drawn) ---------------------- */
+
+function DesktopFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none mx-auto w-full max-w-[240px] select-none border border-[#2A3530] bg-[#0B141A] font-sans shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+    >
+      <div className="flex items-center gap-1 border-b border-[#2A3530] bg-[#1F2C34] px-2 py-1.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-[#EF798A]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#FFA000]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#25D366]" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function VignetteDesktopNoExport() {
+  return (
+    <DesktopFrame>
+      <div className="p-2.5">
+        <div className="border border-[#2A3530] bg-[#111B21]">
+          {["Group info", "Select messages", "Close chat"].map((row) => (
+            <div
+              key={row}
+              className="border-b border-[#2A3530] px-2.5 py-2 text-[9px] text-[#E9EDEF] last:border-b-0"
+            >
+              {row}
+            </div>
+          ))}
+        </div>
+        <p className="px-1 pt-2 text-center text-[8px] leading-relaxed text-[#8696A0]">
+          no Export chat here - it lives on your phone
+        </p>
+      </div>
+    </DesktopFrame>
+  );
+}
+
+function VignetteDesktopInbox() {
+  return (
+    <DesktopFrame>
+      <div className="p-2.5">
+        <div className="flex items-center gap-2 bg-[#25D366]/15 px-2.5 py-2 outline outline-1 outline-[#25D366]">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#25D366] font-mono text-[9px] font-bold text-[#062E1C]">
+            .zip
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-[9px] font-semibold text-[#25D366]">
+              WhatsApp Chat - The Lads
+            </span>
+            <span className="block text-[8px] text-[#8696A0]">
+              me · just now · Download
+            </span>
+          </span>
+        </div>
+        <div className="mt-1.5 border border-[#2A3530] bg-[#111B21] px-2.5 py-2 text-[9px] text-[#8696A0]">
+          Weekly five-a-side invoice
+        </div>
+      </div>
+    </DesktopFrame>
+  );
+}
+
+function VignetteDesktopDrop() {
+  return (
+    <DesktopFrame>
+      <div className="p-2.5">
+        <div className="flex flex-col items-center gap-1.5 border-2 border-dashed border-[#25D366] bg-[#25D366]/10 px-2.5 py-4">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-[#25D366]">
+            Exhibit A
+          </span>
+          <span className="text-[8px] text-[#8696A0]">
+            drop the .zip / .txt here
+          </span>
+        </div>
+      </div>
+    </DesktopFrame>
+  );
+}
+
 /* ------------------------------ Steps data ------------------------------ */
 
 function getSteps(platform: Platform) {
+  if (platform === "desktop") {
+    return [
+      {
+        title: "Export happens on your phone",
+        body: "WhatsApp Web and the desktop app don't offer Export chat - the option only exists in the phone app. Grab your phone for the export itself.",
+        vignette: <VignetteDesktopNoExport />,
+      },
+      {
+        title: "Export on the phone",
+        body: "On your phone: open the chat, find Export chat (group info on iPhone, three-dot menu then More on Android), and pick a media option.",
+        vignette: <VignetteMenu platform="ios" />,
+      },
+      {
+        title: "Send it to this computer",
+        body: "Share the export to yourself - email it, save it to Drive or iCloud, or message it to your own number - then download it on this computer.",
+        vignette: <VignetteDesktopInbox />,
+      },
+      {
+        title: "Drop it into Exhibit A",
+        body: "Come back to this tab and drag the .zip or .txt straight onto the drop zone, or click it to browse for the file.",
+        vignette: <VignetteDesktopDrop />,
+      },
+    ];
+  }
+
   return [
     {
       title: "Open the group chat",
@@ -238,13 +345,14 @@ export default function ExportTutorial({ onClose }: { onClose: () => void }) {
             <span className="bg-primary px-1.5 text-primary-ink">evidence.</span>
           </h2>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
-            WhatsApp can export any chat as a text file. Four steps, done on
-            your phone.
+            {platform === "desktop"
+              ? "WhatsApp can export any chat as a text file. The export starts on your phone, then lands here."
+              : "WhatsApp can export any chat as a text file. Four steps, done on your phone."}
           </p>
 
           {/* Platform toggle */}
-          <div className="mt-5 flex w-max border border-border" role="tablist" aria-label="Phone platform">
-            {(["ios", "android"] as const).map((p) => (
+          <div className="mt-5 flex w-max border border-border" role="tablist" aria-label="Device platform">
+            {(["ios", "android", "desktop"] as const).map((p) => (
               <button
                 key={p}
                 type="button"
@@ -257,7 +365,7 @@ export default function ExportTutorial({ onClose }: { onClose: () => void }) {
                     : "text-muted hover:text-foreground"
                 }`}
               >
-                {p === "ios" ? "iPhone" : "Android"}
+                {p === "ios" ? "iPhone" : p === "android" ? "Android" : "Desktop"}
               </button>
             ))}
           </div>
