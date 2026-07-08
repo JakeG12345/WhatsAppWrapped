@@ -3,11 +3,16 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-const EMOJIS = ["💀", "👀", "😭", "🔥", "📖", "🕵️", "🍿"];
+const STATUS_LINES = [
+  "Reading the export",
+  "Finding running jokes",
+  "Pulling real quotes",
+  "Writing the recap",
+];
 
 // Classic "fake" progress: climbs fast at first, then decelerates and
 // hovers just under the cap. It's driven purely by elapsed time, not real
-// completion — real progress arrives in unpredictable bursts (or, with a
+// completion - real progress arrives in unpredictable bursts (or, with a
 // single big call, just one lump at the end), which looks broken as a
 // literal percentage. This stays smooth and only ever reaches 100% once the
 // parent actually unmounts this screen (i.e. analysis is truly done).
@@ -26,13 +31,13 @@ interface AnalyzingScreenProps {
 }
 
 export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScreenProps) {
-  const [emoji, setEmoji] = useState(EMOJIS[0]);
+  const [statusLine, setStatusLine] = useState(STATUS_LINES[0]);
   const [percent, setPercent] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setEmoji(EMOJIS[Math.floor(Math.random() * EMOJIS.length)]);
-    }, 700);
+      setStatusLine(STATUS_LINES[Math.floor(Math.random() * STATUS_LINES.length)]);
+    }, 1400);
     return () => clearInterval(id);
   }, []);
 
@@ -44,7 +49,7 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
     return () => clearInterval(id);
   }, []);
 
-  // Faked numerator, real denominator — climbs toward the actual message
+  // Faked numerator, real denominator - climbs toward the actual message
   // count with the same curve as the bar, but never reaches it while still
   // in the reading stage (that's reserved for the stage actually changing).
   const messagesRead = Math.min(
@@ -54,28 +59,45 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
 
   const label =
     stage === "reading"
-      ? `Reading ${messagesRead.toLocaleString()}/${totalMessages.toLocaleString()} messages...`
+      ? `Reading ${messagesRead.toLocaleString()} of ${totalMessages.toLocaleString()} messages`
       : stage === "tallying"
-        ? "Compiling the verdict..."
-        : "Writing the awards speech...";
+        ? "Compiling the verdict"
+        : "Writing the awards speech";
 
   return (
-    <div className="flex h-dvh w-full flex-col items-center justify-center gap-6 bg-gradient-to-br from-indigo-800 via-purple-800 to-fuchsia-700 px-8 text-center text-white">
-      <motion.div
-        key={emoji}
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="text-6xl"
-      >
-        {emoji}
-      </motion.div>
-      <p className="text-lg font-semibold">{label}</p>
-      <div className="h-1.5 w-56 overflow-hidden rounded-full bg-white/20">
-        <motion.div
-          className="h-full rounded-full bg-white"
-          animate={{ width: `${percent}%` }}
-          transition={{ ease: "easeOut", duration: 0.2 }}
-        />
+    <div className="wa-screen flex h-dvh w-full flex-col items-center justify-center px-6 text-center text-[#E9EDEF]">
+      <div className="wa-panel flex w-full max-w-sm flex-col gap-6 rounded-[2rem] p-6">
+        <div className="flex items-center gap-3 border-b border-[#2A3942] pb-4 text-left">
+          <div className="h-10 w-10 rounded-full bg-[#00A884]" />
+          <div>
+            <p className="text-sm font-semibold">WhatsApp Wrapped</p>
+            <p className="text-xs text-[#8696A0]">{statusLine}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 text-left">
+          <div className="w-fit rounded-2xl rounded-bl-md bg-[#202C33] px-4 py-3 shadow-sm">
+            <p className="text-sm font-medium">{label}</p>
+            <div className="mt-2 flex gap-1">
+              {[0, 1, 2].map((dot) => (
+                <motion.span
+                  key={dot}
+                  className="h-1.5 w-1.5 rounded-full bg-[#8696A0]"
+                  animate={{ opacity: [0.35, 1, 0.35] }}
+                  transition={{ repeat: Infinity, duration: 1.2, delay: dot * 0.18 }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="h-2 overflow-hidden rounded-full bg-[#2A3942]">
+          <motion.div
+            className="h-full rounded-full bg-[#00A884]"
+            animate={{ width: `${percent}%` }}
+            transition={{ ease: "easeOut", duration: 0.2 }}
+          />
+        </div>
       </div>
     </div>
   );

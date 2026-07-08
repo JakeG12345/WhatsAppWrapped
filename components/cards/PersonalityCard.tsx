@@ -1,13 +1,14 @@
 import CardShell from "./CardShell";
 import type { PersonalityEvidence } from "@/lib/types";
+import { cleanDisplayCopy } from "@/lib/copy";
 import { WHATSAPP_RECEIVED_BUBBLE } from "@/lib/whatsapp";
 
-const GRADIENTS = [
-  "bg-gradient-to-br from-pink-500 via-rose-600 to-red-700",
-  "bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700",
-  "bg-gradient-to-br from-lime-500 via-green-600 to-emerald-700",
-  "bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700",
-  "bg-gradient-to-br from-amber-400 via-orange-500 to-red-600",
+const ACCENTS = [
+  "border-[#25D366]",
+  "border-[#53BDEB]",
+  "border-[#FFA000]",
+  "border-[#D291E4]",
+  "border-[#6BCF9C]",
 ];
 
 interface PersonalityCardProps {
@@ -19,26 +20,30 @@ export default function PersonalityCard({
   personality,
   index,
 }: PersonalityCardProps) {
-  const gradient = GRADIENTS[index % GRADIENTS.length];
+  const accent = ACCENTS[index % ACCENTS.length];
   return (
-    <CardShell gradient={gradient} eyebrow="Personality Award">
-      <p className="text-2xl font-bold text-white/80">{personality.member}</p>
-      <h2 className="text-4xl font-black leading-tight">
-        {personality.archetype}
-      </h2>
-      <p className="text-lg leading-relaxed text-white/90">
-        {personality.roastLine}
-      </p>
+    <CardShell gradient="wa-card-surface" eyebrow="Personality">
+      <div className={`wa-panel rounded-3xl border-l-4 ${accent} p-5`}>
+        <p className="text-sm font-semibold text-[#25D366]">
+          {cleanDisplayCopy(personality.member)}
+        </p>
+        <h2 className="mt-2 text-4xl font-semibold leading-tight">
+          {cleanDisplayCopy(personality.archetype)}
+        </h2>
+        <p className="mt-4 text-base leading-7 text-[#AEBAC1]">
+          {cleanDisplayCopy(personality.roastLine)}
+        </p>
+      </div>
       {personality.evidenceQuotes.length > 0 && (
         <div className="flex flex-col items-start">
           {personality.evidenceQuotes.slice(0, 3).map((q, i) => (
             <div
               key={i}
-              className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-sm shadow-sm ${WHATSAPP_RECEIVED_BUBBLE} ${
+              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm ${WHATSAPP_RECEIVED_BUBBLE} ${
                 i === 0 ? "rounded-bl-md" : "rounded-bl-2xl mt-0.5"
               }`}
             >
-              {q}
+              {cleanDisplayCopy(q)}
             </div>
           ))}
         </div>

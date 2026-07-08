@@ -5,6 +5,9 @@ export interface ChatMessage {
   sender: string;
   text: string;
   isMedia: boolean;
+  // Filename from a "<attached: X>" reference, if this message had one and
+  // the export zip included media — lets the UI look up the real image.
+  mediaFilename?: string;
 }
 
 export interface ParseResult {
@@ -67,14 +70,14 @@ export interface ChatStats {
   longestSilence: SilenceGap | null;
   yapper: { name: string; messageCount: number } | null;
   doubleTexter: { name: string; count: number } | null;
-  // Messages that sat unanswered for AIRBALL_GAP_HOURS+ before anyone replied —
+  // Messages that sat unanswered for AIRBALL_GAP_HOURS+ before anyone replied -
   // full ranking, all members, sorted descending.
   airballs: { name: string; count: number }[];
 }
 
 // ---- LLM analysis output shapes (strict JSON contracts) ----
 
-// A verbatim message — never rewritten or paraphrased by the model, just
+// A verbatim message - never rewritten or paraphrased by the model, just
 // copied exactly from the transcript with its real sender.
 export interface ConversationTurn {
   sender: string;
@@ -85,7 +88,7 @@ export interface MomentCandidate {
   title: string;
   date: string; // best-guess date string, e.g. "March 2026"
   peopleInvolved: string[];
-  // The actual back-and-forth, verbatim and in order — 4-10 consecutive
+  // The actual back-and-forth, verbatim and in order - 4-10 consecutive
   // real messages. This is what renders on the card, not a written summary.
   exchange: ConversationTurn[];
 }
@@ -97,7 +100,7 @@ export interface GagMention {
 }
 
 export interface RunningGagCandidate {
-  name: string; // short label for the joke/phrase — not a description
+  name: string; // short label for the joke/phrase - not a description
   // Every verbatim instance the joke/phrase was referenced, chronological.
   // mentions[0] is the origin; mentions.length is the reference count.
   mentions: GagMention[];
@@ -126,14 +129,13 @@ export interface ChunkExtraction {
   personalityEvidence: PersonalityEvidence[];
 }
 
-// Output of the final synthesis call — drives the card deck directly
+// Output of the final synthesis call - drives the card deck directly
 export interface WrappedResult {
   groupName: string;
   momentOfTheYear: MomentCandidate;
   runningGag: RunningGagCandidate;
   personalities: PersonalityEvidence[];
   quoteOfTheYear: QuoteCandidate;
-  closingSpeech: string;
 }
 
 export type AnalysisProgressStage =

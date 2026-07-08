@@ -11,7 +11,7 @@ async function postAnalyze<T>(body: unknown): Promise<T> {
     "extractChunk"
       ? { messageCount: (body as { messages?: unknown[] }).messages?.length ?? 0 }
       : { extractionCount: (body as { extractions?: unknown[] }).extractions?.length ?? 0 };
-  console.log(`[analyzeClient] → POST /api/analyze (${label})`, summary);
+  console.log(`[analyzeClient] -> POST /api/analyze (${label})`, summary);
   const res = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -20,10 +20,10 @@ async function postAnalyze<T>(body: unknown): Promise<T> {
   const data = await res.json();
   const ms = Math.round(performance.now() - t0);
   if (!res.ok) {
-    console.warn(`[analyzeClient] ✗ (${label}) failed after ${ms}ms — status ${res.status}`, data);
+    console.warn(`[analyzeClient] ✗ (${label}) failed after ${ms}ms - status ${res.status}`, data);
     throw new Error(data?.error ?? `Request failed with status ${res.status}`);
   }
-  console.log(`[analyzeClient] ← (${label}) done in ${ms}ms`);
+  console.log(`[analyzeClient] <- (${label}) done in ${ms}ms`);
   return data.result as T;
 }
 

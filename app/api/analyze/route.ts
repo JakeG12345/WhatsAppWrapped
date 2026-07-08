@@ -3,7 +3,7 @@ import { buildExtractionPrompt, buildSynthesisPrompt, RETRY_REMINDER } from "@/l
 import type { ChatMessage, ChunkExtraction, WrappedResult } from "@/lib/types";
 
 // Extraction is mechanical (find + label real events/quotes verbatim) and
-// runs many times in parallel per request, so it's on Haiku — measured 4s
+// runs many times in parallel per request, so it's on Haiku - measured 4s
 // vs 20-40s on Sonnet for the same chunk. Synthesis is the one genuinely
 // creative call (the roast/curator voice) and runs once total, so it
 // stays on Sonnet for quality.
@@ -45,8 +45,7 @@ function isWrappedResult(x: unknown): x is WrappedResult {
     typeof o.momentOfTheYear === "object" &&
     typeof o.runningGag === "object" &&
     Array.isArray(o.personalities) &&
-    typeof o.quoteOfTheYear === "object" &&
-    typeof o.closingSpeech === "string"
+    typeof o.quoteOfTheYear === "object"
   );
 }
 
@@ -86,11 +85,11 @@ async function callClaudeForJson<T>(
   effort?: "low" | "medium" | "high"
 ): Promise<T> {
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: userPrompt }];
-  // Haiku 4.5 doesn't support the effort parameter — only include
+  // Haiku 4.5 doesn't support the effort parameter - only include
   // output_config when a caller explicitly opts in (Sonnet calls).
   const outputConfig = effort ? { output_config: { effort } } : {};
 
-  log(`${label} → calling Claude`, {
+  log(`${label} -> calling Claude`, {
     model,
     maxTokens,
     effort: effort ?? "(unset)",
@@ -104,7 +103,7 @@ async function callClaudeForJson<T>(
     messages,
     ...outputConfig,
   });
-  log(`${label} ← first response in ${Date.now() - t0}ms`, {
+  log(`${label} <- first response in ${Date.now() - t0}ms`, {
     stopReason: first.stop_reason,
     usage: first.usage,
   });
@@ -115,7 +114,7 @@ async function callClaudeForJson<T>(
     log(`${label} ✓ parsed + validated on attempt 1`);
     return firstParsed;
   }
-  log(`${label} ✗ attempt 1 failed to parse/validate — retrying`, {
+  log(`${label} ✗ attempt 1 failed to parse/validate - retrying`, {
     parsedButInvalidShape: firstParsed !== null,
   });
 
@@ -130,7 +129,7 @@ async function callClaudeForJson<T>(
     messages,
     ...outputConfig,
   });
-  log(`${label} ← retry response in ${Date.now() - t1}ms`, {
+  log(`${label} <- retry response in ${Date.now() - t1}ms`, {
     stopReason: retry.stop_reason,
     usage: retry.usage,
   });
@@ -142,7 +141,7 @@ async function callClaudeForJson<T>(
     return retryParsed;
   }
 
-  log(`${label} ✗ attempt 2 also failed — giving up`, {
+  log(`${label} ✗ attempt 2 also failed - giving up`, {
     parsedButInvalidShape: retryParsed !== null,
   });
   throw new Error("Claude did not return valid JSON matching the expected schema after retry.");
@@ -188,7 +187,7 @@ export async function POST(request: Request) {
         prompt,
         4096,
         isChunkExtraction
-        // no effort param — Haiku 4.5 doesn't support output_config.effort
+        // no effort param - Haiku 4.5 doesn't support output_config.effort
       );
       log(`${label} done in ${Date.now() - requestStart}ms`, {
         moments: result.moments.length,

@@ -3,12 +3,11 @@ import Podium, { type PodiumEntry } from "@/components/Podium";
 export default function MostAirballsCard({ entries }: { entries: PodiumEntry[] }) {
   return (
     <Podium
-      eyebrow=""
-      title="Most Airballs"
-      description="No reply for 2+ hours 💀"
+      title="Most Left on Read"
+      description="Messages followed by 2+ hours of silence."
       entries={entries}
-      unit="airball"
-      gradient="bg-gradient-to-br from-slate-600 via-slate-800 to-black"
+      unit="message"
+      gradient="wa-card-surface"
     />
   );
 }

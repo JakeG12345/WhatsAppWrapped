@@ -102,7 +102,7 @@ export function computeChatStats(messages: ChatMessage[]): ChatStats {
     }
   }
 
-  // "Airball": a message nobody replied to for AIRBALL_GAP_HOURS+ — the
+  // "Airball": a message nobody replied to for AIRBALL_GAP_HOURS+ - the
   // conversation just went quiet after it. Every member starts at 0 so
   // the full ranking (including zero-airball members) is available.
   const AIRBALL_GAP_HOURS = 2;
@@ -199,7 +199,7 @@ function formatChunkLabel(messages: ChatMessage[]): string {
 
   if (start.toDateString() === end.toDateString()) return full(start);
   const startStr = start.getFullYear() === end.getFullYear() ? short(start) : full(start);
-  return `${startStr} – ${full(end)}`;
+  return `${startStr} to ${full(end)}`;
 }
 
 // Splits messages into fixed-size batches rather than calendar months, so

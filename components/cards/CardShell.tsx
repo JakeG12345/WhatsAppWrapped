@@ -1,28 +1,31 @@
-import type { ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 
 interface CardShellProps {
-  gradient: string; // Tailwind gradient classes
+  gradient: string;
   eyebrow?: string;
   children: ReactNode;
   textClassName?: string;
 }
 
-export default function CardShell({
-  gradient,
-  eyebrow,
-  children,
-  textClassName = "text-white",
-}: CardShellProps) {
+const CardShell = forwardRef<HTMLDivElement, CardShellProps>(function CardShell(
+  { gradient, eyebrow, children, textClassName = "text-white" },
+  ref
+) {
   return (
     <div
-      className={`flex h-full w-full flex-col justify-center gap-6 px-8 py-16 ${gradient} ${textClassName}`}
+      ref={ref}
+      className={`relative isolate flex h-full w-full flex-col justify-center gap-5 overflow-hidden px-6 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] pt-[calc(env(safe-area-inset-top)+4.25rem)] sm:px-8 ${gradient} ${textClassName}`}
     >
+      <div className="wa-wallpaper absolute inset-0 -z-20 opacity-80" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(11,20,26,0.24),rgba(11,20,26,0.9))]" />
       {eyebrow && (
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] opacity-70">
+        <p className="wa-kicker">
           {eyebrow}
         </p>
       )}
-      <div className="flex flex-1 flex-col justify-center gap-6">{children}</div>
+      <div className="flex flex-1 flex-col justify-center gap-5">{children}</div>
     </div>
   );
-}
+});
+
+export default CardShell;

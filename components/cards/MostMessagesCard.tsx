@@ -4,10 +4,10 @@ export default function MostMessagesCard({ entries }: { entries: PodiumEntry[] }
   return (
     <Podium
       title="Most Messages"
-      description="Who's the biggest yapper"
+      description="The highest message count in this export."
       entries={entries}
       unit="message"
-      gradient="bg-gradient-to-br from-orange-500 via-red-600 to-rose-700"
+      gradient="wa-card-surface"
     />
   );
 }

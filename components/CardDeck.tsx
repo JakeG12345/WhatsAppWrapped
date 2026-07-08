@@ -40,15 +40,15 @@ export default function CardDeck({ cards, onIndexChange }: CardDeckProps) {
   };
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-black">
+    <div className="relative h-dvh w-full overflow-hidden bg-[#0B141A]">
       <div className="absolute inset-x-0 top-0 z-20 flex gap-1 p-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
         {cards.map((_, i) => (
           <div
             key={i}
-            className="h-1 flex-1 overflow-hidden rounded-full bg-white/25"
+            className="h-1 flex-1 overflow-hidden rounded-full bg-[#2A3942]"
           >
             <div
-              className="h-full rounded-full bg-white transition-all duration-300 ease-out"
+              className="h-full rounded-full bg-[#25D366] transition-all duration-300 ease-out"
               style={{ width: i <= index ? "100%" : "0%" }}
             />
           </div>
@@ -79,11 +79,11 @@ export default function CardDeck({ cards, onIndexChange }: CardDeckProps) {
           aria-label="Previous card"
           onClick={() => goTo(index - 1)}
           disabled={index === 0}
-          className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm disabled:opacity-0"
+          className="rounded-full border border-[#2A3942] bg-[#202C33]/90 px-4 py-2 text-sm font-semibold text-[#E9EDEF] backdrop-blur-sm disabled:opacity-0"
         >
-          ← Back
+          Back
         </button>
-        <p className="text-xs font-medium text-white/50">
+        <p className="rounded-full bg-[#111B21]/80 px-3 py-1 text-xs font-medium text-[#8696A0]">
           {index + 1} / {cards.length}
         </p>
         <button
@@ -91,9 +91,9 @@ export default function CardDeck({ cards, onIndexChange }: CardDeckProps) {
           aria-label="Next card"
           onClick={() => goTo(index + 1)}
           disabled={index === cards.length - 1}
-          className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm disabled:opacity-0"
+          className="rounded-full bg-[#00A884] px-4 py-2 text-sm font-bold text-[#06130D] backdrop-blur-sm disabled:opacity-0"
         >
-          Next →
+          Next
         </button>
       </div>
     </div>
