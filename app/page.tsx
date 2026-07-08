@@ -51,7 +51,7 @@ type AppState =
   | { phase: "upload"; error: string | null }
   | { phase: "pickYear"; parsed: ParseResult; years: YearSummary[]; zipData: Uint8Array | null }
   | { phase: "analyzing"; stage: AnalyzingStage; totalMessages: number }
-  | { phase: "viewing"; entryId: string };
+  | { phase: "viewing"; entryId: string; openIn?: "lobby" | "museum" };
 
 // Small chunks + high concurrency + a fast extraction model (Haiku, see
 // app/api/analyze/route.ts) - this beat one giant no-batching call on
@@ -406,7 +406,9 @@ export default function Home() {
       <DistrictExperience
         entries={entries}
         saveState={saveState}
-        onEnterMuseum={(entry) => setState({ phase: "viewing", entryId: entry.id })}
+        onEnterMuseum={(entry) =>
+          setState({ phase: "viewing", entryId: entry.id, openIn: "museum" })
+        }
         onAddChat={() => setState({ phase: "upload", error: null })}
         onSignIn={() => {
           window.location.href = "/sign-in";
@@ -476,6 +478,7 @@ export default function Home() {
       wrapped={wrapped}
       mediaHighlights={mediaHighlights}
       exitLabel="District"
+      initialMode={state.openIn}
       museumProgress={entry.progress}
       onMuseumProgressChange={(visitedRooms, inspected) =>
         handleMuseumProgress(entry.id, visitedRooms, inspected)
