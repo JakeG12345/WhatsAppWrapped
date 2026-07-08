@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "WhatsApp Wrapped",
-  description: "Spotify Wrapped for your group chat.",
+  description: "Spotify Wrapped for your group chat",
 };
 
 export default function RootLayout({

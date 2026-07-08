@@ -37,9 +37,9 @@ export default function ShareCard({ stats, wrapped }: ShareCardProps) {
         </div>
         <div className="rounded-xl bg-white/10 p-3">
           <p className="truncate text-lg font-black">
-            {stats.ghost?.name ?? "—"}
+            {stats.airballs[0]?.name ?? "—"}
           </p>
-          <p className="text-xs text-white/60">the ghost</p>
+          <p className="text-xs text-white/60">most airballs</p>
         </div>
       </div>
 

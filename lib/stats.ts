@@ -102,6 +102,25 @@ export function computeChatStats(messages: ChatMessage[]): ChatStats {
     }
   }
 
+  // "Airball": a message nobody replied to for AIRBALL_GAP_HOURS+ — the
+  // conversation just went quiet after it. Every member starts at 0 so
+  // the full ranking (including zero-airball members) is available.
+  const AIRBALL_GAP_HOURS = 2;
+  const airballCounts = new Map<string, number>();
+  for (const name of perMember.keys()) airballCounts.set(name, 0);
+  for (let i = 0; i < messages.length - 1; i++) {
+    const gapHours =
+      (messages[i + 1].timestamp.getTime() - messages[i].timestamp.getTime()) /
+      3_600_000;
+    if (gapHours >= AIRBALL_GAP_HOURS) {
+      const sender = messages[i].sender;
+      airballCounts.set(sender, (airballCounts.get(sender) ?? 0) + 1);
+    }
+  }
+  const airballs = Array.from(airballCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
   const members: MemberStats[] = Array.from(perMember.entries()).map(
     ([name, data]) => {
       let longestSilenceHours = 0;
@@ -141,11 +160,6 @@ export function computeChatStats(messages: ChatMessage[]): ChatStats {
   );
 
   const yapperMember = members[0] ?? null;
-  const ghostMember = members.reduce<MemberStats | null>(
-    (max, m) =>
-      !max || m.longestSilenceHours > max.longestSilenceHours ? m : max,
-    null
-  );
   const doubleTexterMember = members.reduce<MemberStats | null>(
     (max, m) => (!max || m.doubleTextCount > max.doubleTextCount ? m : max),
     null
@@ -169,15 +183,10 @@ export function computeChatStats(messages: ChatMessage[]): ChatStats {
     yapper: yapperMember
       ? { name: yapperMember.name, messageCount: yapperMember.messageCount }
       : null,
-    ghost: ghostMember
-      ? {
-          name: ghostMember.name,
-          longestSilenceHours: ghostMember.longestSilenceHours,
-        }
-      : null,
     doubleTexter: doubleTexterMember
       ? { name: doubleTexterMember.name, count: doubleTexterMember.doubleTextCount }
       : null,
+    airballs,
   };
 }
 

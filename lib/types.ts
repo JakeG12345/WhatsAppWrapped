@@ -66,26 +66,41 @@ export interface ChatStats {
   dayHistogram: DayCount[];
   longestSilence: SilenceGap | null;
   yapper: { name: string; messageCount: number } | null;
-  ghost: { name: string; longestSilenceHours: number } | null;
   doubleTexter: { name: string; count: number } | null;
+  // Messages that sat unanswered for AIRBALL_GAP_HOURS+ before anyone replied —
+  // full ranking, all members, sorted descending.
+  airballs: { name: string; count: number }[];
 }
 
 // ---- LLM analysis output shapes (strict JSON contracts) ----
 
+// A verbatim message — never rewritten or paraphrased by the model, just
+// copied exactly from the transcript with its real sender.
+export interface ConversationTurn {
+  sender: string;
+  text: string;
+}
+
 export interface MomentCandidate {
   title: string;
   date: string; // best-guess date string, e.g. "March 2026"
-  narrative: string; // museum-plaque style description
   peopleInvolved: string[];
-  evidenceQuotes: string[];
+  // The actual back-and-forth, verbatim and in order — 4-10 consecutive
+  // real messages. This is what renders on the card, not a written summary.
+  exchange: ConversationTurn[];
+}
+
+export interface GagMention {
+  sender: string;
+  text: string; // verbatim quote
+  date: string;
 }
 
 export interface RunningGagCandidate {
-  name: string;
-  originDate: string;
-  originQuote: string;
-  timesReferenced: number;
-  description: string;
+  name: string; // short label for the joke/phrase — not a description
+  // Every verbatim instance the joke/phrase was referenced, chronological.
+  // mentions[0] is the origin; mentions.length is the reference count.
+  mentions: GagMention[];
 }
 
 export interface QuoteCandidate {

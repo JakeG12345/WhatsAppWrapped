@@ -25,8 +25,16 @@ function formatMessages(messages: ChatMessage[], maxChars = 14000): string {
 
 const EXTRACTION_SCHEMA = `{
   "chunkLabel": string,
-  "moments": [{ "title": string, "date": string, "narrative": string (2-4 sentences, museum-plaque style), "peopleInvolved": string[], "evidenceQuotes": string[] (verbatim quotes from the transcript) }],
-  "runningGags": [{ "name": string, "originDate": string, "originQuote": string (verbatim), "timesReferenced": number, "description": string }],
+  "moments": [{
+    "title": string,
+    "date": string,
+    "peopleInvolved": string[],
+    "exchange": [{ "sender": string, "text": string }] (4-10 consecutive real messages, VERBATIM and in order — copy the exact text, do not paraphrase or summarize)
+  }],
+  "runningGags": [{
+    "name": string (short label for the joke/phrase, NOT a description),
+    "mentions": [{ "sender": string, "text": string (verbatim), "date": string }] (every time this joke/phrase was referenced in this segment, chronological — mentions[0] is the origin)
+  }],
   "standoutQuotes": [{ "sender": string, "text": string (verbatim), "date": string, "context": string }],
   "personalityEvidence": [{ "member": string, "archetype": string (2-4 word noun phrase), "roastLine": string (one sentence), "evidenceQuotes": string[] (verbatim) }]
 }`;
@@ -36,9 +44,11 @@ export function buildExtractionPrompt(chunkLabel: string, messages: ChatMessage[
 
 ${TONE_RULES}
 
+The card deck shows real messages, not written summaries — so "moments" and "runningGags" must carry verbatim transcript text, not prose about the transcript.
+
 Find, if present in this segment's messages:
-- Notable "moments": arguments, running bits that started, chaotic events, plans that went wrong. Only include real events with evidence — do not invent.
-- Running gags: jokes, phrases, or bits that got referenced more than once.
+- Notable "moments": arguments, running bits that started, chaotic events, plans that went wrong. For each, pull the actual 4-10 consecutive messages that show it happening — copy sender and text exactly as written. Skip stretches that are just "[media]" placeholders with no real text. Only include real events with evidence — do not invent.
+- Running gags: jokes, phrases, or bits that got referenced more than once. For each, list every verbatim instance it was said (sender, exact text, date) — do not describe the joke, show it.
 - Standout quotes: the most unhinged, funny, or memorable single messages.
 - Personality evidence: behavior patterns for specific members (e.g. always double-texts, always the voice of reason, always derails the topic).
 
@@ -55,8 +65,16 @@ ${formatMessages(messages)}`;
 
 const SYNTHESIS_SCHEMA = `{
   "groupName": string,
-  "momentOfTheYear": { "title": string, "date": string, "narrative": string, "peopleInvolved": string[], "evidenceQuotes": string[] },
-  "runningGag": { "name": string, "originDate": string, "originQuote": string, "timesReferenced": number, "description": string },
+  "momentOfTheYear": {
+    "title": string,
+    "date": string,
+    "peopleInvolved": string[],
+    "exchange": [{ "sender": string, "text": string }] (copied VERBATIM from the winning candidate's exchange — do not rewrite, paraphrase, or invent messages)
+  },
+  "runningGag": {
+    "name": string,
+    "mentions": [{ "sender": string, "text": string, "date": string }] (verbatim, chronological — see merge rule below)
+  },
   "personalities": [{ "member": string, "archetype": string, "roastLine": string, "evidenceQuotes": string[] }],
   "quoteOfTheYear": { "sender": string, "text": string, "date": string, "context": string },
   "closingSpeech": string (3-5 sentences, Oscars-style closing remarks addressed to the group)
@@ -71,9 +89,11 @@ export function buildSynthesisPrompt(
 
 ${TONE_RULES}
 
+The card deck shows real messages, not written summaries — "momentOfTheYear.exchange" and "runningGag.mentions" must stay verbatim transcript text carried over from the candidates below, never rewritten into prose.
+
 Your job:
-1. Pick the single best "moment of the year" across the WHOLE chat — the most specific, evidence-backed, funniest or most dramatic one. Write its narrative like a museum exhibit plaque.
-2. Pick the single best running gag across the whole chat (prefer ones referenced many times or that returned after a long absence).
+1. Pick the single best "moment of the year" across the WHOLE chat — the most specific, evidence-backed, funniest or most dramatic exchange. Copy its "exchange" array verbatim from the winning candidate; only write the title/date/peopleInvolved framing yourself.
+2. Pick the single best running gag across the whole chat (prefer ones referenced many times or that returned after a long absence). If the same joke/phrase shows up as a candidate in multiple segments, merge them: combine all their "mentions" into one chronological list under a single name, rather than picking just one segment's version.
 3. Produce one personality card per member listed below (members: ${members.join(", ")}). Merge evidence across segments for the same person. If a member has thin evidence, still give them a plausible archetype grounded in whatever evidence exists — never leave a member out.
 4. Pick the single most unhinged/memorable quote of the year.
 5. Write a short Oscars-style closing speech from the curator to the group, referencing at least one specific person or moment by name.

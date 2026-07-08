@@ -6,9 +6,9 @@ import YearPicker from "@/components/YearPicker";
 import AnalyzingScreen from "@/components/AnalyzingScreen";
 import CardDeck from "@/components/CardDeck";
 import TitleCard from "@/components/cards/TitleCard";
-import YapperCard from "@/components/cards/YapperCard";
-import GhostCard from "@/components/cards/GhostCard";
-import MomentCard from "@/components/cards/MomentCard";
+import MostMessagesCard from "@/components/cards/MostMessagesCard";
+import MostAirballsCard from "@/components/cards/MostAirballsCard";
+import MemorableChatCard from "@/components/cards/MemorableChatCard";
 import RunningGagCard from "@/components/cards/RunningGagCard";
 import PersonalityCard from "@/components/cards/PersonalityCard";
 import QuoteCard from "@/components/cards/QuoteCard";
@@ -49,8 +49,11 @@ type AppState =
 const TARGET_CHUNKS = 16;
 const MIN_CHUNK_SIZE = 150;
 const MAX_CHUNK_SIZE = 800;
-const MAX_CHUNKS = 24; // hard cap — with CONCURRENCY below, at most 2 rounds
-const CONCURRENCY = 12;
+const MAX_CHUNKS = 24;
+// >= MAX_CHUNKS so extraction is always exactly one parallel round, never
+// several sequential batches — wall time is bounded by the single slowest
+// chunk call, not (chunks / concurrency) rounds of them.
+const CONCURRENCY = MAX_CHUNKS;
 
 function dynamicChunkSize(messageCount: number): number {
   return Math.max(MIN_CHUNK_SIZE, Math.min(MAX_CHUNK_SIZE, Math.ceil(messageCount / TARGET_CHUNKS)));
@@ -215,21 +218,12 @@ export default function Home() {
       messageCount={stats.totalMessages}
       year={year}
     />,
-    stats.yapper && (
-      <YapperCard
-        key="yapper"
-        name={stats.yapper.name}
-        messageCount={stats.yapper.messageCount}
-      />
-    ),
-    stats.ghost && (
-      <GhostCard
-        key="ghost"
-        name={stats.ghost.name}
-        longestSilenceHours={stats.ghost.longestSilenceHours}
-      />
-    ),
-    <MomentCard key="moment" moment={wrapped.momentOfTheYear} />,
+    <MostMessagesCard
+      key="most-messages"
+      entries={stats.members.map((m) => ({ name: m.name, count: m.messageCount }))}
+    />,
+    <MostAirballsCard key="most-airballs" entries={stats.airballs} />,
+    <MemorableChatCard key="moment" moment={wrapped.momentOfTheYear} />,
     <RunningGagCard key="gag" gag={wrapped.runningGag} />,
     ...wrapped.personalities.map((p, i) => (
       <PersonalityCard key={`personality-${p.member}`} personality={p} index={i} />
@@ -241,7 +235,7 @@ export default function Home() {
       closingSpeech={wrapped.closingSpeech}
     />,
     <ShareCard key="share" stats={stats} wrapped={wrapped} />,
-  ].filter(Boolean) as React.ReactNode[];
+  ];
 
   return (
     <div className="relative">

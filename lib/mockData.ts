@@ -28,16 +28,21 @@ export function generateMockWrappedResult(
     momentOfTheYear: {
       title: `The ${topEmoji} Incident`,
       date: `${stats.busiestDay.day}, ${new Date().getFullYear()}`,
-      narrative: `On what began as an unremarkable ${stats.busiestDay.day}, ${yapperName} and ${secondName} triggered a chain of ${stats.busiestHour.count}+ messages in a single hour. Historians remain divided on what actually happened. The chat has not been the same since. [Mock data — real chat analysis will replace this]`,
       peopleInvolved: [yapperName, secondName],
-      evidenceQuotes: ["this is fine", "wait what", "I'm actually deceased"],
+      exchange: [
+        { sender: yapperName, text: "wait does anyone else see this" },
+        { sender: secondName, text: "see what" },
+        { sender: yapperName, text: "nvm it's gone now" },
+        { sender: secondName, text: "this is fine" },
+        { sender: yapperName, text: "I'm actually deceased [Mock data]" },
+      ],
     },
     runningGag: {
       name: `The ${topEmoji} Reference`,
-      originDate: "Early in the chat's history",
-      originQuote: "someone said something and it just... stuck",
-      timesReferenced: stats.topEmojisOverall[0]?.count ?? 12,
-      description: `A bit that should have died in its first week and instead became structural. [Mock data — real chat analysis will replace this]`,
+      mentions: [
+        { sender: yapperName, text: "someone said something and it just... stuck", date: stats.dateRange.start.toLocaleDateString() },
+        { sender: secondName, text: "not this again [Mock data]", date: stats.dateRange.end.toLocaleDateString() },
+      ],
     },
     personalities: topMembers.map((m, i) => {
       const archetype = pick(ARCHETYPES, i);

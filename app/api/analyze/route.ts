@@ -3,9 +3,10 @@ import { buildExtractionPrompt, buildSynthesisPrompt, RETRY_REMINDER } from "@/l
 import type { ChatMessage, ChunkExtraction, WrappedResult } from "@/lib/types";
 
 // Extraction is mechanical (find + label real events/quotes verbatim) and
-// runs once per chunk, so it's on Haiku for speed. Synthesis is the one
-// genuinely creative call (the roast/curator voice is the whole point of
-// the product) and runs once total, so it stays on Sonnet for quality.
+// runs many times in parallel per request, so it's on Haiku — measured 4s
+// vs 20-40s on Sonnet for the same chunk. Synthesis is the one genuinely
+// creative call (the roast/curator voice) and runs once total, so it
+// stays on Sonnet for quality.
 const EXTRACTION_MODEL = "claude-haiku-4-5";
 const SYNTHESIS_MODEL = "claude-sonnet-4-6";
 
@@ -74,10 +75,6 @@ function log(label: string, ...args: unknown[]) {
   console.log(`[analyze] ${label}`, ...args);
 }
 
-function preview(text: string, max = 1200): string {
-  return text.length > max ? `${text.slice(0, max)}…(${text.length} chars total)` : text;
-}
-
 async function callClaudeForJson<T>(
   client: Anthropic,
   label: string,
@@ -112,7 +109,7 @@ async function callClaudeForJson<T>(
     usage: first.usage,
   });
   const firstText = extractText(first);
-  log(`${label} raw text (attempt 1):`, preview(firstText));
+  log(`${label} received text (attempt 1)`, { chars: firstText.length });
   const firstParsed = parseJson(firstText);
   if (validate(firstParsed)) {
     log(`${label} ✓ parsed + validated on attempt 1`);
@@ -138,7 +135,7 @@ async function callClaudeForJson<T>(
     usage: retry.usage,
   });
   const retryText = extractText(retry);
-  log(`${label} raw text (attempt 2):`, preview(retryText));
+  log(`${label} received text (attempt 2)`, { chars: retryText.length });
   const retryParsed = parseJson(retryText);
   if (validate(retryParsed)) {
     log(`${label} ✓ parsed + validated on attempt 2 (retry)`);
@@ -191,6 +188,7 @@ export async function POST(request: Request) {
         prompt,
         4096,
         isChunkExtraction
+        // no effort param — Haiku 4.5 doesn't support output_config.effort
       );
       log(`${label} done in ${Date.now() - requestStart}ms`, {
         moments: result.moments.length,
@@ -221,7 +219,7 @@ export async function POST(request: Request) {
         prompt,
         8192,
         isWrappedResult,
-        "medium"
+        "low"
       );
       log(`${label} done in ${Date.now() - requestStart}ms`);
       return Response.json({ result });

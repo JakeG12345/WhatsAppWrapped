@@ -40,7 +40,7 @@ function run(label, raw) {
     const stats = computeChatStats(result.messages);
     console.log("stats.totalMessages:", stats.totalMessages);
     console.log("stats.yapper:", stats.yapper);
-    console.log("stats.ghost:", stats.ghost);
+    console.log("stats.airballs:", stats.airballs);
     console.log("stats.doubleTexter:", stats.doubleTexter);
     console.log("stats.topEmojisOverall:", stats.topEmojisOverall);
     console.log("stats.longestSilence:", stats.longestSilence);
