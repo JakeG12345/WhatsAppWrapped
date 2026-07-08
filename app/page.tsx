@@ -25,7 +25,29 @@ type AppState =
   | { phase: "ready"; stats: ChatStats; wrapped: WrappedResult };
 
 const MAX_MONTHS = 24;
+const CONCURRENCY = 4;
 const FUN_EMOJI = ["💀", "👀", "😭", "🔥", "🕵️"];
+
+// Runs async work over `items` with at most `limit` in flight at once —
+// per-month Claude calls are independent, so running them one-at-a-time
+// (as the original sequential loop did) multiplied wall-clock time by the
+// number of months for no benefit.
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 async function runRealAnalysis(
   groupName: string | null,
@@ -34,19 +56,43 @@ async function runRealAnalysis(
   onProgress: (label: string) => void
 ): Promise<WrappedResult> {
   const recentChunks = chunks.slice(-MAX_MONTHS);
-  const extractions: MonthlyExtraction[] = [];
 
-  for (let i = 0; i < recentChunks.length; i++) {
-    const chunk = recentChunks[i];
-    const emoji = FUN_EMOJI[i % FUN_EMOJI.length];
-    onProgress(`Reading ${chunk.monthLabel}... ${emoji}`);
+  console.log(
+    `[runRealAnalysis] ${chunks.length} months total, analyzing most recent ${recentChunks.length} with concurrency ${CONCURRENCY}:`,
+    recentChunks.map((c) => `${c.monthLabel} (${c.messages.length} msgs)`)
+  );
+
+  let completed = 0;
+  onProgress(`Reading ${recentChunks.length} months of chat... ${FUN_EMOJI[0]}`);
+
+  const settled = await mapWithConcurrency(recentChunks, CONCURRENCY, async (chunk, i) => {
+    console.log(
+      `[runRealAnalysis] starting ${chunk.monthLabel} — ${chunk.messages.length} messages`
+    );
+    const chunkStart = performance.now();
     try {
       const extraction = await extractMonth(chunk.monthLabel, chunk.messages);
-      extractions.push(extraction);
+      completed++;
+      console.log(
+        `[runRealAnalysis] (${completed}/${recentChunks.length}) finished ${chunk.monthLabel} in ${Math.round(performance.now() - chunkStart)}ms`
+      );
+      onProgress(
+        `Reading your chat... ${completed}/${recentChunks.length} months ${FUN_EMOJI[i % FUN_EMOJI.length]}`
+      );
+      return extraction;
     } catch (err) {
-      console.warn(`Skipping ${chunk.monthLabel}: analysis failed`, err);
+      completed++;
+      console.warn(
+        `[runRealAnalysis] (${completed}/${recentChunks.length}) FAILED ${chunk.monthLabel} after ${Math.round(performance.now() - chunkStart)}ms — skipping`,
+        err
+      );
+      return null;
     }
-  }
+  });
+
+  const extractions: MonthlyExtraction[] = settled.filter(
+    (x): x is MonthlyExtraction => x !== null
+  );
 
   if (extractions.length === 0) {
     throw new Error("No months could be analyzed.");

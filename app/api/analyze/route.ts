@@ -65,38 +65,80 @@ function extractText(message: Anthropic.Message): string {
     .join("");
 }
 
+function log(label: string, ...args: unknown[]) {
+  console.log(`[analyze] ${label}`, ...args);
+}
+
+function preview(text: string, max = 1200): string {
+  return text.length > max ? `${text.slice(0, max)}…(${text.length} chars total)` : text;
+}
+
 async function callClaudeForJson<T>(
   client: Anthropic,
+  label: string,
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number,
-  validate: (x: unknown) => x is T
+  validate: (x: unknown) => x is T,
+  effort: "low" | "medium" | "high" = "medium"
 ): Promise<T> {
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: userPrompt }];
 
+  log(`${label} → calling Claude`, {
+    model: MODEL,
+    maxTokens,
+    effort,
+    promptChars: userPrompt.length,
+  });
+  const t0 = Date.now();
   const first = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages,
+    output_config: { effort },
+  });
+  log(`${label} ← first response in ${Date.now() - t0}ms`, {
+    stopReason: first.stop_reason,
+    usage: first.usage,
   });
   const firstText = extractText(first);
+  log(`${label} raw text (attempt 1):`, preview(firstText));
   const firstParsed = parseJson(firstText);
-  if (validate(firstParsed)) return firstParsed;
+  if (validate(firstParsed)) {
+    log(`${label} ✓ parsed + validated on attempt 1`);
+    return firstParsed;
+  }
+  log(`${label} ✗ attempt 1 failed to parse/validate — retrying`, {
+    parsedButInvalidShape: firstParsed !== null,
+  });
 
   messages.push({ role: "assistant", content: firstText });
   messages.push({ role: "user", content: RETRY_REMINDER });
 
+  const t1 = Date.now();
   const retry = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages,
+    output_config: { effort },
+  });
+  log(`${label} ← retry response in ${Date.now() - t1}ms`, {
+    stopReason: retry.stop_reason,
+    usage: retry.usage,
   });
   const retryText = extractText(retry);
+  log(`${label} raw text (attempt 2):`, preview(retryText));
   const retryParsed = parseJson(retryText);
-  if (validate(retryParsed)) return retryParsed;
+  if (validate(retryParsed)) {
+    log(`${label} ✓ parsed + validated on attempt 2 (retry)`);
+    return retryParsed;
+  }
 
+  log(`${label} ✗ attempt 2 also failed — giving up`, {
+    parsedButInvalidShape: retryParsed !== null,
+  });
   throw new Error("Claude did not return valid JSON matching the expected schema after retry.");
 }
 
@@ -119,9 +161,12 @@ export async function POST(request: Request) {
   }
 
   const client = new Anthropic();
+  const requestStart = Date.now();
 
   try {
     if (body.action === "extractMonth") {
+      const label = `extractMonth:${body.monthLabel}`;
+      log(`${label} request received`, { messageCount: body.messages.length });
       const messages: ChatMessage[] = body.messages.map((m) => ({
         sender: m.sender,
         text: m.text,
@@ -131,15 +176,29 @@ export async function POST(request: Request) {
       const prompt = buildExtractionPrompt(body.monthLabel, messages);
       const result = await callClaudeForJson(
         client,
+        label,
         SYSTEM_PROMPT,
         prompt,
         4096,
-        isMonthlyExtraction
+        isMonthlyExtraction,
+        "low"
       );
+      log(`${label} done in ${Date.now() - requestStart}ms`, {
+        moments: result.moments.length,
+        runningGags: result.runningGags.length,
+        standoutQuotes: result.standoutQuotes.length,
+        personalityEvidence: result.personalityEvidence.length,
+      });
       return Response.json({ result });
     }
 
     if (body.action === "synthesize") {
+      const label = "synthesize";
+      log(`${label} request received`, {
+        groupName: body.groupName,
+        members: body.members.length,
+        extractions: body.extractions.length,
+      });
       const prompt = buildSynthesisPrompt(
         body.groupName,
         body.members,
@@ -147,16 +206,19 @@ export async function POST(request: Request) {
       );
       const result = await callClaudeForJson(
         client,
+        label,
         SYSTEM_PROMPT,
         prompt,
         8192,
         isWrappedResult
       );
+      log(`${label} done in ${Date.now() - requestStart}ms`);
       return Response.json({ result });
     }
 
     return Response.json({ error: "Unknown action." }, { status: 400 });
   } catch (err) {
+    log("✗ request failed", err instanceof Error ? err.stack ?? err.message : err);
     const message = err instanceof Error ? err.message : "Unknown error calling Claude.";
     return Response.json({ error: message }, { status: 502 });
   }
