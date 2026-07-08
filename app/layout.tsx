@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "WhatsApp Wrapped - Your Chat, On the Record",
   description:
     "Turn a WhatsApp export into an annual report of your group chat: awards, running jokes, quotes, and receipts.",
+  icons: {
+    icon: "/brand/whatsapp.svg",
+  },
 };
 
 export const viewport: Viewport = {

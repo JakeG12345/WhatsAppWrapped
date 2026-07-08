@@ -48,7 +48,16 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
             ← District
           </button>
         ) : (
-          <p className="mono-label text-muted">WhatsApp Wrapped</p>
+          <span className="flex items-center gap-2">
+            <img
+              src="/brand/whatsapp.svg"
+              alt=""
+              width={16}
+              height={16}
+              className="h-4 w-4"
+            />
+            <p className="mono-label text-muted">WhatsApp Wrapped</p>
+          </span>
         )}
         <span className="flex items-center gap-4">
           {userName ? (
@@ -73,7 +82,16 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-6 sm:px-6">
         {/* Headline block */}
         <div>
-          <p className="mono-label text-primary">The annual report</p>
+          <p className="mono-label flex items-center gap-2 text-primary">
+            <img
+              src="/brand/whatsapp.svg"
+              alt="WhatsApp"
+              width={18}
+              height={18}
+              className="h-[18px] w-[18px]"
+            />
+            The annual report
+          </p>
           <h1 className="mt-3 text-balance text-[13vw] font-black uppercase leading-[0.92] tracking-tight sm:text-6xl">
             Your chat,
             <br />

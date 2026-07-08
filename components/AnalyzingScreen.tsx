@@ -68,7 +68,16 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
   return (
     <main className="flex h-dvh w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
-        <p className="mono-label text-muted">WhatsApp Wrapped</p>
+        <span className="flex items-center gap-2">
+          <img
+            src="/brand/whatsapp.svg"
+            alt=""
+            width={16}
+            height={16}
+            className="h-4 w-4"
+          />
+          <p className="mono-label text-muted">WhatsApp Wrapped</p>
+        </span>
         <p className="mono-label flex items-center gap-2 text-primary">
           <motion.span
             className="inline-block h-1.5 w-1.5 rounded-full bg-primary"
