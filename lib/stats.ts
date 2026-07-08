@@ -1,0 +1,202 @@
+import type {
+  ChatMessage,
+  ChatStats,
+  DayCount,
+  EmojiCount,
+  HourCount,
+  MemberStats,
+  SilenceGap,
+} from "./types";
+
+const EMOJI_REGEX =
+  /\p{Extended_Pictographic}(\uFE0F)?(\u200D\p{Extended_Pictographic}(\uFE0F)?)*/gu;
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function extractEmojis(text: string): string[] {
+  return text.match(EMOJI_REGEX) ?? [];
+}
+
+function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+function topN(counts: Map<string, number>, n: number): EmojiCount[] {
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([emoji, count]) => ({ emoji, count }));
+}
+
+export function computeChatStats(messages: ChatMessage[]): ChatStats {
+  if (messages.length === 0) {
+    throw new Error("Cannot compute stats for an empty message list");
+  }
+
+  const hourCounts = new Array<number>(24).fill(0);
+  const dayCounts = new Array<number>(7).fill(0);
+  const emojiOverall = new Map<string, number>();
+
+  const perMember = new Map<
+    string,
+    {
+      messageCount: number;
+      wordCount: number;
+      mediaCount: number;
+      emojis: Map<string, number>;
+      timestamps: Date[];
+      doubleTextCount: number;
+    }
+  >();
+
+  let lastSender: string | null = null;
+
+  for (const msg of messages) {
+    hourCounts[msg.timestamp.getHours()]++;
+    dayCounts[msg.timestamp.getDay()]++;
+
+    if (!perMember.has(msg.sender)) {
+      perMember.set(msg.sender, {
+        messageCount: 0,
+        wordCount: 0,
+        mediaCount: 0,
+        emojis: new Map(),
+        timestamps: [],
+        doubleTextCount: 0,
+      });
+    }
+    const m = perMember.get(msg.sender)!;
+    m.messageCount++;
+    m.timestamps.push(msg.timestamp);
+    if (msg.isMedia) {
+      m.mediaCount++;
+    } else {
+      m.wordCount += countWords(msg.text);
+      for (const emoji of extractEmojis(msg.text)) {
+        emojiOverall.set(emoji, (emojiOverall.get(emoji) ?? 0) + 1);
+        m.emojis.set(emoji, (m.emojis.get(emoji) ?? 0) + 1);
+      }
+    }
+
+    if (lastSender === msg.sender) {
+      m.doubleTextCount++;
+    }
+    lastSender = msg.sender;
+  }
+
+  let longestSilence: SilenceGap | null = null;
+  for (let i = 1; i < messages.length; i++) {
+    const hours =
+      (messages[i].timestamp.getTime() - messages[i - 1].timestamp.getTime()) /
+      3_600_000;
+    if (!longestSilence || hours > longestSilence.hours) {
+      longestSilence = {
+        startAt: messages[i - 1].timestamp,
+        endAt: messages[i].timestamp,
+        hours,
+        brokenBy: messages[i].sender,
+      };
+    }
+  }
+
+  const members: MemberStats[] = Array.from(perMember.entries()).map(
+    ([name, data]) => {
+      let longestSilenceHours = 0;
+      for (let i = 1; i < data.timestamps.length; i++) {
+        const gap =
+          (data.timestamps[i].getTime() - data.timestamps[i - 1].getTime()) /
+          3_600_000;
+        if (gap > longestSilenceHours) longestSilenceHours = gap;
+      }
+      return {
+        name,
+        messageCount: data.messageCount,
+        wordCount: data.wordCount,
+        mediaCount: data.mediaCount,
+        topEmojis: topN(data.emojis, 3),
+        doubleTextCount: data.doubleTextCount,
+        longestSilenceHours,
+      };
+    }
+  );
+  members.sort((a, b) => b.messageCount - a.messageCount);
+
+  const hourHistogram: HourCount[] = hourCounts.map((count, hour) => ({
+    hour,
+    count,
+  }));
+  const dayHistogram: DayCount[] = dayCounts.map((count, i) => ({
+    day: DAY_NAMES[i],
+    count,
+  }));
+
+  const busiestHour = hourHistogram.reduce((max, h) =>
+    h.count > max.count ? h : max
+  );
+  const busiestDay = dayHistogram.reduce((max, d) =>
+    d.count > max.count ? d : max
+  );
+
+  const yapperMember = members[0] ?? null;
+  const ghostMember = members.reduce<MemberStats | null>(
+    (max, m) =>
+      !max || m.longestSilenceHours > max.longestSilenceHours ? m : max,
+    null
+  );
+  const doubleTexterMember = members.reduce<MemberStats | null>(
+    (max, m) => (!max || m.doubleTextCount > max.doubleTextCount ? m : max),
+    null
+  );
+
+  return {
+    totalMessages: messages.length,
+    totalWords: members.reduce((sum, m) => sum + m.wordCount, 0),
+    totalMedia: members.reduce((sum, m) => sum + m.mediaCount, 0),
+    dateRange: {
+      start: messages[0].timestamp,
+      end: messages[messages.length - 1].timestamp,
+    },
+    members,
+    topEmojisOverall: topN(emojiOverall, 10),
+    busiestHour,
+    busiestDay,
+    hourHistogram,
+    dayHistogram,
+    longestSilence,
+    yapper: yapperMember
+      ? { name: yapperMember.name, messageCount: yapperMember.messageCount }
+      : null,
+    ghost: ghostMember
+      ? {
+          name: ghostMember.name,
+          longestSilenceHours: ghostMember.longestSilenceHours,
+        }
+      : null,
+    doubleTexter: doubleTexterMember
+      ? { name: doubleTexterMember.name, count: doubleTexterMember.doubleTextCount }
+      : null,
+  };
+}
+
+export function chunkMessagesByMonth(
+  messages: ChatMessage[]
+): { monthLabel: string; messages: ChatMessage[] }[] {
+  const chunks = new Map<string, ChatMessage[]>();
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+
+  for (const msg of messages) {
+    const key = `${monthNames[msg.timestamp.getMonth()]} ${msg.timestamp.getFullYear()}`;
+    if (!chunks.has(key)) chunks.set(key, []);
+    chunks.get(key)!.push(msg);
+  }
+
+  return Array.from(chunks.entries()).map(([monthLabel, messages]) => ({
+    monthLabel,
+    messages,
+  }));
+}
