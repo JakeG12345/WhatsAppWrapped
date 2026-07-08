@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Upload from "@/components/Upload";
 import YearPicker from "@/components/YearPicker";
 import AnalyzingScreen from "@/components/AnalyzingScreen";
 import ExperienceSwitcher from "@/components/ExperienceSwitcher";
+import DistrictExperience, { type DistrictSaveState } from "@/components/DistrictExperience";
 import TitleCard from "@/components/cards/TitleCard";
 import MostMessagesCard from "@/components/cards/MostMessagesCard";
 import MostAirballsCard from "@/components/cards/MostAirballsCard";
@@ -19,10 +20,24 @@ import { computeChatStats, chunkMessagesByCount, summarizeByYear } from "@/lib/s
 import { generateMockWrappedResult } from "@/lib/mockData";
 import { extractChunk, synthesize } from "@/lib/analyzeClient";
 import { extractChatTextFromZip, isZipFile } from "@/lib/zip";
-import { buildMediaHighlights, revokeMediaHighlights, type MediaHighlight } from "@/lib/media";
+import { buildMediaHighlights, revokeMediaHighlights } from "@/lib/media";
+import {
+  deserializeEntry,
+  loadGuestDistrict,
+  newEntryId,
+  saveGuestDistrict,
+  serializeEntry,
+  type ArchiveEntry,
+} from "@/lib/archive";
+import {
+  getSessionUser,
+  loadDistrict,
+  saveEntry,
+  saveProgress,
+  deleteEntry as deleteEntryAction,
+} from "@/app/actions/district";
 import type {
   ChatMessage,
-  ChatStats,
   ChunkExtraction,
   ParseResult,
   WrappedResult,
@@ -32,15 +47,11 @@ import type {
 type AnalyzingStage = "reading" | "tallying" | "writing";
 
 type AppState =
+  | { phase: "district" }
   | { phase: "upload"; error: string | null }
   | { phase: "pickYear"; parsed: ParseResult; years: YearSummary[]; zipData: Uint8Array | null }
   | { phase: "analyzing"; stage: AnalyzingStage; totalMessages: number }
-  | {
-      phase: "ready";
-      stats: ChatStats;
-      wrapped: WrappedResult;
-      mediaHighlights: MediaHighlight[];
-    };
+  | { phase: "viewing"; entryId: string };
 
 // Small chunks + high concurrency + a fast extraction model (Haiku, see
 // app/api/analyze/route.ts) - this beat one giant no-batching call on
@@ -95,29 +106,17 @@ async function runRealAnalysis(
 ): Promise<WrappedResult> {
   const recentChunks = chunks.slice(-MAX_CHUNKS);
 
-  console.log(
-    `[runRealAnalysis] ${chunks.length} chunks total, analyzing most recent ${recentChunks.length} with concurrency ${CONCURRENCY}:`,
-    recentChunks.map((c) => `${c.chunkLabel} (${c.messages.length} msgs)`)
-  );
-
   let completed = 0;
 
   const settled = await mapWithConcurrency(recentChunks, CONCURRENCY, async (chunk) => {
-    console.log(
-      `[runRealAnalysis] starting ${chunk.chunkLabel} - ${chunk.messages.length} messages`
-    );
-    const chunkStart = performance.now();
     try {
       const extraction = await extractChunk(chunk.chunkLabel, chunk.messages);
       completed++;
-      console.log(
-        `[runRealAnalysis] (${completed}/${recentChunks.length}) finished ${chunk.chunkLabel} in ${Math.round(performance.now() - chunkStart)}ms`
-      );
       return extraction;
     } catch (err) {
       completed++;
       console.warn(
-        `[runRealAnalysis] (${completed}/${recentChunks.length}) FAILED ${chunk.chunkLabel} after ${Math.round(performance.now() - chunkStart)}ms - skipping`,
+        `[runRealAnalysis] (${completed}/${recentChunks.length}) FAILED ${chunk.chunkLabel} - skipping`,
         err
       );
       return null;
@@ -138,12 +137,98 @@ async function runRealAnalysis(
 }
 
 export default function Home() {
-  const [state, setState] = useState<AppState>({ phase: "upload", error: null });
+  const [state, setState] = useState<AppState>({ phase: "district" });
+  const [entries, setEntries] = useState<ArchiveEntry[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
+  const [saveState, setSaveState] = useState<DistrictSaveState>({ kind: "guest" });
+  // Debounces museum progress writes to the server per entry.
+  const progressTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
+  // ---------------------------------------------------------------------
+  // Hydration: guest entries from localStorage, then (if signed in) merge
+  // with the server district. Local-only entries get pushed up; server
+  // entries win on conflict since they may carry progress from elsewhere.
+  // ---------------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrate() {
+      const guestEntries = loadGuestDistrict();
+
+      let sessionUser: { id: string; name: string } | null = null;
+      let serverEntries: ArchiveEntry[] | null = null;
+      try {
+        sessionUser = await getSessionUser();
+        if (sessionUser) {
+          const raw = await loadDistrict();
+          serverEntries = raw ? raw.map(deserializeEntry) : [];
+        }
+      } catch (err) {
+        console.warn("Could not reach the archive server - staying in guest mode.", err);
+      }
+
+      if (cancelled) return;
+
+      if (sessionUser && serverEntries) {
+        setUser(sessionUser);
+        const serverIds = new Set(serverEntries.map((e) => e.id));
+        const localOnly = guestEntries.filter((e) => !serverIds.has(e.id));
+        const merged = [...serverEntries, ...localOnly];
+        setEntries(merged);
+        setSaveState({ kind: "saved", userName: sessionUser.name });
+        // Push local-only entries up so the account owns them.
+        for (const entry of localOnly) {
+          saveEntry(serializeEntry(entry)).catch((err) =>
+            console.warn("Failed to sync a local chat to your account:", err)
+          );
+        }
+      } else {
+        setEntries(guestEntries);
+        setSaveState({ kind: "guest" });
+      }
+      setHydrated(true);
+    }
+
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Guests keep their district in localStorage across visits.
+  useEffect(() => {
+    if (!hydrated) return;
+    saveGuestDistrict(entries);
+  }, [entries, hydrated]);
+
+  const persistEntry = useCallback(
+    (entry: ArchiveEntry) => {
+      if (!user) return;
+      setSaveState({ kind: "saving" });
+      saveEntry(serializeEntry(entry))
+        .then((res) => {
+          setSaveState(
+            res.ok
+              ? { kind: "saved", userName: user.name }
+              : { kind: "error", message: "Save failed - your session may have expired." }
+          );
+        })
+        .catch(() => {
+          setSaveState({ kind: "error", message: "Save failed - check your connection." });
+        });
+    },
+    [user]
+  );
+
+  // -----------------------------------------------------------------------
+  // Analysis pipeline (unchanged mechanics; now lands in the district).
+  // -----------------------------------------------------------------------
   async function startAnalysis(
     parsed: ParseResult,
     messages: ChatMessage[],
-    zipData: Uint8Array | null
+    zipData: Uint8Array | null,
+    year: number | null
   ) {
     const totalMessages = messages.length;
     setState({ phase: "analyzing", stage: "reading", totalMessages });
@@ -163,12 +248,25 @@ export default function Home() {
       wrapped = generateMockWrappedResult(parsed.groupName, stats);
     }
 
-    // Only possible when the upload was a zip with media included — a
-    // plain .txt (or a zip with media excluded) yields an empty gallery,
-    // and the card just doesn't render (see the deck-building code below).
+    // Only possible when the upload was a zip with media included - a
+    // plain .txt (or a zip with media excluded) yields an empty gallery.
+    // Session-only: blob URLs are never persisted.
     const mediaHighlights = buildMediaHighlights(messages, zipData);
 
-    setState({ phase: "ready", stats, wrapped, mediaHighlights });
+    const entry: ArchiveEntry = {
+      id: newEntryId(),
+      chatName: wrapped.groupName,
+      year,
+      stats,
+      wrapped,
+      mediaHighlights,
+      progress: { discoveredWings: [], inspectedExhibits: [] },
+      createdAt: new Date().toISOString(),
+    };
+
+    setEntries((prev) => [...prev, entry]);
+    persistEntry(entry);
+    setState({ phase: "viewing", entryId: entry.id });
   }
 
   async function handleFile(file: File) {
@@ -216,7 +314,8 @@ export default function Home() {
 
     const years = summarizeByYear(parsed.messages);
     if (years.length <= 1) {
-      await startAnalysis(parsed, parsed.messages, zipData);
+      const onlyYear = years.length === 1 ? years[0].year : null;
+      await startAnalysis(parsed, parsed.messages, zipData, onlyYear);
       return;
     }
 
@@ -232,11 +331,88 @@ export default function Home() {
       selection === "all"
         ? parsed.messages
         : parsed.messages.filter((m) => m.timestamp.getFullYear() === selection);
-    startAnalysis(parsed, messages, zipData);
+    startAnalysis(parsed, messages, zipData, selection === "all" ? null : selection);
   }
 
-  if (state.phase === "upload") {
-    return <Upload onFile={handleFile} error={state.error} />;
+  // -----------------------------------------------------------------------
+  // Museum progress: update local state immediately, debounce server writes.
+  // -----------------------------------------------------------------------
+  const handleMuseumProgress = useCallback(
+    (entryId: string, visitedRooms: string[], inspected: string[]) => {
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === entryId
+            ? { ...e, progress: { discoveredWings: visitedRooms, inspectedExhibits: inspected } }
+            : e
+        )
+      );
+
+      if (!user) return;
+      const timers = progressTimers.current;
+      const existing = timers.get(entryId);
+      if (existing) clearTimeout(existing);
+      timers.set(
+        entryId,
+        setTimeout(() => {
+          timers.delete(entryId);
+          saveProgress(entryId, {
+            discoveredWings: visitedRooms,
+            inspectedExhibits: inspected,
+          }).catch((err) => console.warn("Failed to save museum progress:", err));
+        }, 1200)
+      );
+    },
+    [user]
+  );
+
+  function handleDeleteEntry(entryId: string) {
+    const entry = entries.find((e) => e.id === entryId);
+    if (entry) revokeMediaHighlights(entry.mediaHighlights);
+    setEntries((prev) => prev.filter((e) => e.id !== entryId));
+    if (user) {
+      deleteEntryAction(entryId).catch((err) =>
+        console.warn("Failed to delete the chat from your account:", err)
+      );
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
+  if (state.phase === "upload" || (state.phase === "district" && hydrated && entries.length === 0)) {
+    return (
+      <Upload
+        onFile={handleFile}
+        error={state.phase === "upload" ? state.error : null}
+        onBack={
+          state.phase === "upload" && entries.length > 0
+            ? () => setState({ phase: "district" })
+            : undefined
+        }
+      />
+    );
+  }
+
+  if (state.phase === "district") {
+    if (!hydrated) {
+      return (
+        <main className="grain flex h-dvh items-center justify-center bg-background">
+          <p className="mono-label text-muted">Opening the archive district&hellip;</p>
+        </main>
+      );
+    }
+    return (
+      <DistrictExperience
+        entries={entries}
+        saveState={saveState}
+        onEnterMuseum={(entry) => setState({ phase: "viewing", entryId: entry.id })}
+        onAddChat={() => setState({ phase: "upload", error: null })}
+        onSignIn={() => {
+          window.location.href = "/sign-in";
+        }}
+        onDeleteEntry={handleDeleteEntry}
+      />
+    );
   }
 
   if (state.phase === "pickYear") {
@@ -254,8 +430,15 @@ export default function Home() {
     return <AnalyzingScreen stage={state.stage} totalMessages={state.totalMessages} />;
   }
 
-  const { stats, wrapped, mediaHighlights } = state;
-  const year = stats.dateRange.end.getFullYear();
+  const entry = entries.find((e) => e.id === state.entryId);
+  if (!entry) {
+    // Entry was deleted out from under the view - fall back to the district.
+    setState({ phase: "district" });
+    return null;
+  }
+
+  const { stats, wrapped, mediaHighlights } = entry;
+  const year = entry.year ?? stats.dateRange.end.getFullYear();
 
   const cards = [
     <TitleCard
@@ -270,7 +453,7 @@ export default function Home() {
       entries={stats.members.map((m) => ({ name: m.name, count: m.messageCount }))}
     />,
     <MostAirballsCard key="most-airballs" entries={stats.airballs} />,
-    // Only present when the upload was a zip with media included — a plain
+    // Only present when the upload was a zip with media included - a plain
     // .txt export has no image bytes to show at all.
     mediaHighlights.length > 0 && (
       <CameraRollCard key="camera-roll" highlights={mediaHighlights} />
@@ -286,14 +469,17 @@ export default function Home() {
 
   return (
     <ExperienceSwitcher
+      key={entry.id}
       cards={cards}
       stats={stats}
       wrapped={wrapped}
       mediaHighlights={mediaHighlights}
-      onReset={() => {
-        revokeMediaHighlights(mediaHighlights);
-        setState({ phase: "upload", error: null });
-      }}
+      exitLabel="District"
+      museumProgress={entry.progress}
+      onMuseumProgressChange={(visitedRooms, inspected) =>
+        handleMuseumProgress(entry.id, visitedRooms, inspected)
+      }
+      onReset={() => setState({ phase: "district" })}
     />
   );
 }

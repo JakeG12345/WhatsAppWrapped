@@ -5,6 +5,8 @@ import { useCallback, useRef, useState } from "react";
 interface UploadProps {
   onFile: (file: File) => void;
   error?: string | null;
+  /** When set, shows a back button returning to the Archive District. */
+  onBack?: () => void;
 }
 
 const MARQUEE_ITEMS = [
@@ -16,7 +18,7 @@ const MARQUEE_ITEMS = [
   "THE RECEIPTS",
 ];
 
-export default function Upload({ onFile, error }: UploadProps) {
+export default function Upload({ onFile, error, onBack }: UploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,7 +35,17 @@ export default function Upload({ onFile, error }: UploadProps) {
     <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground">
       {/* Masthead */}
       <header className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
-        <p className="mono-label text-muted">WhatsApp Wrapped</p>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mono-label text-muted transition-colors hover:text-foreground"
+          >
+            ← District
+          </button>
+        ) : (
+          <p className="mono-label text-muted">WhatsApp Wrapped</p>
+        )}
         <p className="mono-label text-muted">Vol. {new Date().getFullYear()}</p>
       </header>
 

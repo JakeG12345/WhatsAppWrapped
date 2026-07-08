@@ -65,6 +65,12 @@ interface MuseumExperienceProps {
   stats: ChatStats;
   wrapped: WrappedResult;
   mediaHighlights: MediaHighlight[];
+  /** Restore previously discovered wings (room ids). */
+  initialVisitedRooms?: string[];
+  /** Restore previously inspected exhibit ids. */
+  initialInspected?: string[];
+  /** Fired whenever discovery progress changes, for persistence. */
+  onProgressChange?: (visitedRooms: string[], inspected: string[]) => void;
 }
 
 const WORLD = { w: 1280, h: 920 };
@@ -1006,6 +1012,9 @@ export default function MuseumExperience({
   stats,
   wrapped,
   mediaHighlights,
+  initialVisitedRooms,
+  initialInspected,
+  onProgressChange,
 }: MuseumExperienceProps) {
   const hasPhotos = mediaHighlights.length > 0;
   const rooms = useMemo(() => buildRooms(hasPhotos), [hasPhotos]);
@@ -1016,8 +1025,12 @@ export default function MuseumExperience({
   );
 
   const [player, setPlayer] = useState<Point>(START);
-  const [visitedRooms, setVisitedRooms] = useState<Set<RoomId>>(() => new Set(["archive"]));
-  const [inspected, setInspected] = useState<Set<string>>(() => new Set());
+  const [visitedRooms, setVisitedRooms] = useState<Set<RoomId>>(
+    () => new Set(["archive", ...((initialVisitedRooms ?? []) as RoomId[])])
+  );
+  const [inspected, setInspected] = useState<Set<string>>(
+    () => new Set(initialInspected ?? [])
+  );
   const [activeExhibit, setActiveExhibit] = useState<Exhibit | null>(null);
   const [lightsOn, setLightsOn] = useState(false);
   const [moving, setMoving] = useState(false);
@@ -1034,7 +1047,9 @@ export default function MuseumExperience({
   const footprintIdRef = useRef(0);
   const worldRef = useRef<HTMLDivElement>(null);
   const splashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const seenRoomsRef = useRef<Set<RoomId>>(new Set(["archive"]));
+  const seenRoomsRef = useRef<Set<RoomId>>(
+    new Set(["archive", ...((initialVisitedRooms ?? []) as RoomId[])])
+  );
 
   const currentRoom = useMemo(() => findRoom(player, rooms), [player, rooms]);
   const nearestExhibit = useMemo(() => {
@@ -1050,6 +1065,11 @@ export default function MuseumExperience({
   useEffect(() => {
     sheetOpenRef.current = activeExhibit !== null;
   }, [activeExhibit]);
+
+  useEffect(() => {
+    onProgressChange?.(Array.from(visitedRooms), Array.from(inspected));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visitedRooms, inspected]);
 
   useEffect(() => {
     return () => {
@@ -1225,7 +1245,15 @@ export default function MuseumExperience({
   const showCertificate = allExhibitsInspected && !celebrated && !activeExhibit;
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#040A08] text-[#E9EDEF]">
+    <div
+      // Camera moves the world via transform; pin focus-scroll to 0,0 so
+      // overlays never drift when buttons deep in the world get focused.
+      onScroll={(e) => {
+        e.currentTarget.scrollLeft = 0;
+        e.currentTarget.scrollTop = 0;
+      }}
+      className="relative h-dvh w-full overflow-hidden bg-[#040A08] text-[#E9EDEF]"
+    >
       {/* HUD top */}
       <div className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top)+4.85rem)] z-40 flex items-start justify-between gap-3">
         <div className="flex flex-col gap-2">

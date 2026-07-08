@@ -15,6 +15,12 @@ interface ExperienceSwitcherProps {
   wrapped: WrappedResult;
   mediaHighlights: MediaHighlight[];
   onReset: () => void;
+  /** Label for the exit button (defaults to "Reset"). */
+  exitLabel?: string;
+  /** Restore museum discovery progress (Archive District persistence). */
+  museumProgress?: { discoveredWings: string[]; inspectedExhibits: string[] };
+  /** Fired when museum discovery progress changes, for persistence. */
+  onMuseumProgressChange?: (visitedRooms: string[], inspected: string[]) => void;
 }
 
 function ModeButton({
@@ -45,10 +51,12 @@ function TopNav({
   mode,
   setMode,
   onReset,
+  exitLabel = "Reset",
 }: {
   mode: Mode;
   setMode: (mode: Mode) => void;
   onReset: () => void;
+  exitLabel?: string;
 }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.9rem)] z-50 flex items-center justify-between gap-2 px-3">
@@ -69,7 +77,7 @@ function TopNav({
         onClick={onReset}
         className="mono-label pointer-events-auto border border-[#242C25] bg-[#0A0E0B]/92 px-3 py-2 text-[#7D8880] shadow-lg backdrop-blur-md transition-colors hover:text-[#E9EDE9]"
       >
-        Reset
+        {exitLabel}
       </button>
     </div>
   );
@@ -175,12 +183,15 @@ export default function ExperienceSwitcher({
   wrapped,
   mediaHighlights,
   onReset,
+  exitLabel,
+  museumProgress,
+  onMuseumProgressChange,
 }: ExperienceSwitcherProps) {
   const [mode, setMode] = useState<Mode>("lobby");
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-background">
-      <TopNav mode={mode} setMode={setMode} onReset={onReset} />
+      <TopNav mode={mode} setMode={setMode} onReset={onReset} exitLabel={exitLabel} />
       {mode === "lobby" && (
         <RecapLobby
           stats={stats}
@@ -195,6 +206,9 @@ export default function ExperienceSwitcher({
           stats={stats}
           wrapped={wrapped}
           mediaHighlights={mediaHighlights}
+          initialVisitedRooms={museumProgress?.discoveredWings}
+          initialInspected={museumProgress?.inspectedExhibits}
+          onProgressChange={onMuseumProgressChange}
         />
       )}
     </div>
