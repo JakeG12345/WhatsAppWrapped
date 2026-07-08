@@ -94,7 +94,7 @@ export default function Upload({ onFile, error }: UploadProps) {
         )}
 
         <p className="px-2 text-center text-xs leading-5 text-[#8696A0]">
-          Parsed in your browser. Sent to Claude only for analysis. Never stored.
+          Parsed in your browser. Sent only for analysis. Never stored.
         </p>
       </div>
     </div>

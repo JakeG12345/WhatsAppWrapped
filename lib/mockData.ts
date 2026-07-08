@@ -33,14 +33,14 @@ export function generateMockWrappedResult(
         { sender: secondName, text: "see what" },
         { sender: yapperName, text: "nvm, it is gone now" },
         { sender: secondName, text: "that feels worth remembering" },
-        { sender: yapperName, text: "adding it to the annual report [Mock data]" },
+        { sender: yapperName, text: "adding it to the annual report" },
       ],
     },
     runningGag: {
       name: "The Recurring Bit",
       mentions: [
         { sender: yapperName, text: "someone said something and it stuck", date: stats.dateRange.start.toLocaleDateString() },
-        { sender: secondName, text: "not this again [Mock data]", date: stats.dateRange.end.toLocaleDateString() },
+        { sender: secondName, text: "not this again", date: stats.dateRange.end.toLocaleDateString() },
       ],
     },
     personalities: topMembers.map((m, i) => {
@@ -56,7 +56,7 @@ export function generateMockWrappedResult(
       sender: yapperName,
       text: "I'm not saying it was me, I'm saying no one can prove it wasn't",
       date: `${stats.dateRange.start.toLocaleDateString()}`,
-      context: "Said with no prompting, in the middle of an unrelated conversation. [Mock data]",
+      context: "Said with no prompting, in the middle of an unrelated conversation.",
     },
   };
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Upload from "@/components/Upload";
 import YearPicker from "@/components/YearPicker";
 import AnalyzingScreen from "@/components/AnalyzingScreen";
-import CardDeck from "@/components/CardDeck";
+import ExperienceSwitcher from "@/components/ExperienceSwitcher";
 import TitleCard from "@/components/cards/TitleCard";
 import MostMessagesCard from "@/components/cards/MostMessagesCard";
 import MostAirballsCard from "@/components/cards/MostAirballsCard";
@@ -285,19 +285,15 @@ export default function Home() {
   ].filter(Boolean);
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => {
-          revokeMediaHighlights(mediaHighlights);
-          setState({ phase: "upload", error: null });
-        }}
-        aria-label="Start over"
-        className="absolute right-3 top-[calc(env(safe-area-inset-top)+0.85rem)] z-30 rounded-full border border-[#2A3942] bg-[#202C33]/90 px-3 py-1.5 text-xs font-semibold text-[#E9EDEF] backdrop-blur-sm"
-      >
-        Reset
-      </button>
-      <CardDeck cards={cards} />
-    </div>
+    <ExperienceSwitcher
+      cards={cards}
+      stats={stats}
+      wrapped={wrapped}
+      mediaHighlights={mediaHighlights}
+      onReset={() => {
+        revokeMediaHighlights(mediaHighlights);
+        setState({ phase: "upload", error: null });
+      }}
+    />
   );
 }
