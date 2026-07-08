@@ -334,7 +334,17 @@ export default function DistrictExperience({
   const totalMessages = entries.reduce((sum, e) => sum + e.stats.totalMessages, 0);
 
   return (
-    <div ref={viewportRef} className="relative h-dvh w-full overflow-hidden bg-[#040906] text-[#E9EDE9]">
+    <div
+      ref={viewportRef}
+      // The camera positions the world via transform; if the browser focus-
+      // scrolls this overflow-hidden container (clicking a button deep in the
+      // oversized world), every absolute overlay drifts. Pin it to 0,0.
+      onScroll={(e) => {
+        e.currentTarget.scrollLeft = 0;
+        e.currentTarget.scrollTop = 0;
+      }}
+      className="relative h-dvh w-full overflow-hidden bg-[#040906] text-[#E9EDE9]"
+    >
       {/* ------------------------------------------------------ world layer */}
       <div
         ref={worldRef}

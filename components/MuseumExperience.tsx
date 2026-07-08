@@ -1245,7 +1245,15 @@ export default function MuseumExperience({
   const showCertificate = allExhibitsInspected && !celebrated && !activeExhibit;
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#040A08] text-[#E9EDEF]">
+    <div
+      // Camera moves the world via transform; pin focus-scroll to 0,0 so
+      // overlays never drift when buttons deep in the world get focused.
+      onScroll={(e) => {
+        e.currentTarget.scrollLeft = 0;
+        e.currentTarget.scrollTop = 0;
+      }}
+      className="relative h-dvh w-full overflow-hidden bg-[#040A08] text-[#E9EDEF]"
+    >
       {/* HUD top */}
       <div className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top)+4.85rem)] z-40 flex items-start justify-between gap-3">
         <div className="flex flex-col gap-2">

@@ -16,6 +16,13 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     ...(process.env.V0_RUNTIME_URL ? [process.env.V0_RUNTIME_URL] : []),
+    // The v0 preview is also served from friendly *.vusercontent.net aliases
+    // that differ from V0_RUNTIME_URL, so trust the whole preview domain.
+    'https://*.vusercontent.net',
+    // Local development (the v0 sandbox serves the app on localhost too).
+    ...(process.env.NODE_ENV === 'development'
+      ? ['http://localhost:3000', 'http://localhost:3001']
+      : []),
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
