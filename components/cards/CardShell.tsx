@@ -20,14 +20,16 @@ const CardShell = forwardRef<HTMLDivElement, CardShellProps>(function CardShell(
       ref={ref}
       className={`grain relative isolate flex h-full w-full flex-col overflow-hidden px-5 pb-[calc(env(safe-area-inset-bottom)+5.25rem)] pt-[calc(env(safe-area-inset-top)+3.5rem)] sm:px-8 ${className}`}
     >
-      {eyebrow && (
-        <div className="relative z-10 flex items-center justify-between border-b border-current/20 pb-2">
-          <p className="mono-label">{eyebrow}</p>
-          <p className="mono-label opacity-50">WA Wrapped</p>
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-2xl min-h-0 flex-col">
+        {eyebrow && (
+          <div className="flex items-center justify-between border-b border-current/20 pb-2">
+            <p className="mono-label">{eyebrow}</p>
+            <p className="mono-label opacity-50">WA Wrapped</p>
+          </div>
+        )}
+        <div className="flex min-h-0 flex-1 flex-col justify-center gap-5 pt-4">
+          {children}
         </div>
-      )}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-center gap-5 pt-4">
-        {children}
       </div>
     </div>
   );
