@@ -14,6 +14,13 @@ export interface ParseResult {
   warnings: string[];
 }
 
+export interface YearSummary {
+  year: number;
+  messageCount: number;
+  memberCount: number;
+  dateRange: { start: Date; end: Date };
+}
+
 export interface EmojiCount {
   emoji: string;
   count: number;

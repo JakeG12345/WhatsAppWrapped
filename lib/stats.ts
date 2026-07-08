@@ -6,6 +6,7 @@ import type {
   HourCount,
   MemberStats,
   SilenceGap,
+  YearSummary,
 } from "./types";
 
 const EMOJI_REGEX =
@@ -199,4 +200,24 @@ export function chunkMessagesByMonth(
     monthLabel,
     messages,
   }));
+}
+
+// Assumes `messages` is already sorted chronologically (parseWhatsAppChat
+// guarantees this), so each year's bucket is chronological too.
+export function summarizeByYear(messages: ChatMessage[]): YearSummary[] {
+  const byYear = new Map<number, ChatMessage[]>();
+  for (const msg of messages) {
+    const year = msg.timestamp.getFullYear();
+    if (!byYear.has(year)) byYear.set(year, []);
+    byYear.get(year)!.push(msg);
+  }
+
+  return Array.from(byYear.entries())
+    .map(([year, msgs]) => ({
+      year,
+      messageCount: msgs.length,
+      memberCount: new Set(msgs.map((m) => m.sender)).size,
+      dateRange: { start: msgs[0].timestamp, end: msgs[msgs.length - 1].timestamp },
+    }))
+    .sort((a, b) => b.year - a.year);
 }

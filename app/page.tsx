@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Upload from "@/components/Upload";
+import YearPicker from "@/components/YearPicker";
 import AnalyzingScreen from "@/components/AnalyzingScreen";
 import CardDeck from "@/components/CardDeck";
 import TitleCard from "@/components/cards/TitleCard";
@@ -14,13 +15,21 @@ import QuoteCard from "@/components/cards/QuoteCard";
 import FinaleCard from "@/components/cards/FinaleCard";
 import ShareCard from "@/components/cards/ShareCard";
 import { parseWhatsAppChat } from "@/lib/parser";
-import { computeChatStats, chunkMessagesByMonth } from "@/lib/stats";
+import { computeChatStats, chunkMessagesByMonth, summarizeByYear } from "@/lib/stats";
 import { generateMockWrappedResult } from "@/lib/mockData";
 import { extractMonth, synthesize } from "@/lib/analyzeClient";
-import type { ChatStats, MonthlyExtraction, WrappedResult } from "@/lib/types";
+import type {
+  ChatMessage,
+  ChatStats,
+  MonthlyExtraction,
+  ParseResult,
+  WrappedResult,
+  YearSummary,
+} from "@/lib/types";
 
 type AppState =
   | { phase: "upload"; error: string | null }
+  | { phase: "pickYear"; parsed: ParseResult; years: YearSummary[] }
   | { phase: "analyzing"; label: string }
   | { phase: "ready"; stats: ChatStats; wrapped: WrappedResult };
 
@@ -52,7 +61,7 @@ async function mapWithConcurrency<T, R>(
 async function runRealAnalysis(
   groupName: string | null,
   members: string[],
-  chunks: { monthLabel: string; messages: import("@/lib/types").ChatMessage[] }[],
+  chunks: { monthLabel: string; messages: ChatMessage[] }[],
   onProgress: (label: string) => void
 ): Promise<WrappedResult> {
   const recentChunks = chunks.slice(-MAX_MONTHS);
@@ -106,6 +115,27 @@ async function runRealAnalysis(
 export default function Home() {
   const [state, setState] = useState<AppState>({ phase: "upload", error: null });
 
+  async function startAnalysis(parsed: ParseResult, messages: ChatMessage[]) {
+    setState({ phase: "analyzing", label: "Reading your chat..." });
+
+    const members = Array.from(new Set(messages.map((m) => m.sender)));
+    const stats = computeChatStats(messages);
+    const chunks = chunkMessagesByMonth(messages);
+
+    let wrapped: WrappedResult;
+    try {
+      wrapped = await runRealAnalysis(parsed.groupName, members, chunks, (label) =>
+        setState({ phase: "analyzing", label })
+      );
+    } catch (err) {
+      console.warn("Falling back to mock analysis:", err);
+      setState({ phase: "analyzing", label: "Writing the awards speech..." });
+      wrapped = generateMockWrappedResult(parsed.groupName, stats);
+    }
+
+    setState({ phase: "ready", stats, wrapped });
+  }
+
   async function handleFile(file: File) {
     setState({ phase: "analyzing", label: "Reading your chat..." });
 
@@ -122,28 +152,36 @@ export default function Home() {
       return;
     }
 
-    const stats = computeChatStats(parsed.messages);
-    const chunks = chunkMessagesByMonth(parsed.messages);
-
-    let wrapped: WrappedResult;
-    try {
-      wrapped = await runRealAnalysis(
-        parsed.groupName,
-        parsed.members,
-        chunks,
-        (label) => setState({ phase: "analyzing", label })
-      );
-    } catch (err) {
-      console.warn("Falling back to mock analysis:", err);
-      setState({ phase: "analyzing", label: "Writing the awards speech..." });
-      wrapped = generateMockWrappedResult(parsed.groupName, stats);
+    const years = summarizeByYear(parsed.messages);
+    if (years.length <= 1) {
+      await startAnalysis(parsed, parsed.messages);
+      return;
     }
 
-    setState({ phase: "ready", stats, wrapped });
+    setState({ phase: "pickYear", parsed, years });
+  }
+
+  function handleSelectYear(parsed: ParseResult, selection: number | "all") {
+    const messages =
+      selection === "all"
+        ? parsed.messages
+        : parsed.messages.filter((m) => m.timestamp.getFullYear() === selection);
+    startAnalysis(parsed, messages);
   }
 
   if (state.phase === "upload") {
     return <Upload onFile={handleFile} error={state.error} />;
+  }
+
+  if (state.phase === "pickYear") {
+    return (
+      <YearPicker
+        years={state.years}
+        totalMessageCount={state.parsed.messages.length}
+        totalMemberCount={state.parsed.members.length}
+        onSelect={(selection) => handleSelectYear(state.parsed, selection)}
+      />
+    );
   }
 
   if (state.phase === "analyzing") {
