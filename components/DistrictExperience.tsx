@@ -676,10 +676,14 @@ export default function DistrictExperience({
           )}
           {saveState.kind === "saved" && (
             <div className="flex gap-px">
-              <p className="mono-label border border-[#242C25] bg-[#0A0E0B]/92 px-3 py-2 text-[#7D8880] backdrop-blur-md">
+              <a
+                href="/settings"
+                className="mono-label border border-[#242C25] bg-[#0A0E0B]/92 px-3 py-2 text-[#7D8880] backdrop-blur-md transition-colors hover:text-[#E9EDE9]"
+                title="Curator settings"
+              >
                 <span className="text-[#25D366]">Saved</span>
                 {` · ${saveState.userName}`}
-              </p>
+              </a>
               {onSignOut && (
                 <button
                   type="button"

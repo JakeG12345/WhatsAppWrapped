@@ -50,7 +50,12 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
         )}
         <span className="flex items-center gap-4">
           {userName ? (
-            <p className="mono-label text-primary">{userName}</p>
+            <a
+              href="/settings"
+              className="mono-label text-primary underline-offset-4 hover:underline"
+            >
+              {userName}
+            </a>
           ) : (
             <a
               href="/sign-in"
