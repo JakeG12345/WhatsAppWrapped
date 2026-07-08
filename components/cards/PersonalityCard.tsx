@@ -1,5 +1,6 @@
 import CardShell from "./CardShell";
 import type { PersonalityEvidence } from "@/lib/types";
+import { WHATSAPP_RECEIVED_BUBBLE } from "@/lib/whatsapp";
 
 const GRADIENTS = [
   "bg-gradient-to-br from-pink-500 via-rose-600 to-red-700",
@@ -29,11 +30,16 @@ export default function PersonalityCard({
         {personality.roastLine}
       </p>
       {personality.evidenceQuotes.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {personality.evidenceQuotes.slice(0, 2).map((q, i) => (
-            <p key={i} className="text-sm italic text-white/60">
-              &ldquo;{q}&rdquo;
-            </p>
+        <div className="flex flex-col items-start">
+          {personality.evidenceQuotes.slice(0, 3).map((q, i) => (
+            <div
+              key={i}
+              className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-sm shadow-sm ${WHATSAPP_RECEIVED_BUBBLE} ${
+                i === 0 ? "rounded-bl-md" : "rounded-bl-2xl mt-0.5"
+              }`}
+            >
+              {q}
+            </div>
           ))}
         </div>
       )}
