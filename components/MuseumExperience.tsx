@@ -44,7 +44,6 @@ interface Room extends Zone {
   title: string;
   label: string;
   accent: string;
-  bg: string;
 }
 
 interface Exhibit extends Zone {
@@ -58,6 +57,10 @@ interface Exhibit extends Zone {
   personalityIndex?: number;
 }
 
+interface Footprint extends Point {
+  id: number;
+}
+
 interface MuseumExperienceProps {
   stats: ChatStats;
   wrapped: WrappedResult;
@@ -67,8 +70,9 @@ interface MuseumExperienceProps {
 const WORLD = { w: 1280, h: 920 };
 const START: Point = { x: 640, y: 468 };
 const PLAYER_RADIUS = 17;
-const SPEED = 4.2;
+const SPEED = 4.4;
 const INSPECT_DISTANCE = 112;
+const TORCH_RADIUS = 300;
 
 const CORRIDORS: Zone[] = [
   { x: 300, y: 178, w: 680, h: 76 },
@@ -96,83 +100,22 @@ function initials(name: string): string {
 
 function buildRooms(hasPhotos: boolean): Room[] {
   return [
-    {
-      id: "quote",
-      title: "Quote Vault",
-      label: "QUOTE",
-      x: 70,
-      y: 96,
-      w: 294,
-      h: 214,
-      accent: "#53BDEB",
-      bg: "linear-gradient(135deg, rgba(83,189,235,0.15), rgba(17,27,33,0.98))",
-    },
-    {
-      id: "canon",
-      title: "Canon Gallery",
-      label: "CANON",
-      x: 426,
-      y: 72,
-      w: 428,
-      h: 246,
-      accent: "#25D366",
-      bg: "linear-gradient(135deg, rgba(37,211,102,0.17), rgba(17,27,33,0.98))",
-    },
+    { id: "quote", title: "Quote Vault", label: "WING 01", x: 70, y: 96, w: 294, h: 214, accent: "#53BDEB" },
+    { id: "canon", title: "Canon Gallery", label: "WING 02", x: 426, y: 72, w: 428, h: 246, accent: "#25D366" },
     {
       id: "photos",
       title: hasPhotos ? "Camera Room" : "Receipt Wall",
-      label: hasPhotos ? "PHOTOS" : "RECEIPTS",
+      label: "WING 03",
       x: 916,
       y: 96,
       w: 294,
       h: 214,
       accent: "#6BCF9C",
-      bg: "linear-gradient(135deg, rgba(107,207,156,0.15), rgba(17,27,33,0.98))",
     },
-    {
-      id: "stats",
-      title: "Stats Arcade",
-      label: "STATS",
-      x: 70,
-      y: 388,
-      w: 312,
-      h: 240,
-      accent: "#FFA000",
-      bg: "linear-gradient(135deg, rgba(255,160,0,0.16), rgba(17,27,33,0.98))",
-    },
-    {
-      id: "archive",
-      title: "Archive Hall",
-      label: "LOBBY",
-      x: 456,
-      y: 360,
-      w: 368,
-      h: 238,
-      accent: "#00A884",
-      bg: "linear-gradient(135deg, rgba(0,168,132,0.18), rgba(17,27,33,0.98))",
-    },
-    {
-      id: "gag",
-      title: "Joke Reliquary",
-      label: "JOKE",
-      x: 898,
-      y: 388,
-      w: 332,
-      h: 240,
-      accent: "#D291E4",
-      bg: "linear-gradient(135deg, rgba(210,145,228,0.16), rgba(17,27,33,0.98))",
-    },
-    {
-      id: "cast",
-      title: "Cast Wing",
-      label: "CAST",
-      x: 384,
-      y: 708,
-      w: 512,
-      h: 166,
-      accent: "#EF798A",
-      bg: "linear-gradient(135deg, rgba(239,121,138,0.15), rgba(17,27,33,0.98))",
-    },
+    { id: "stats", title: "Stats Arcade", label: "WING 04", x: 70, y: 388, w: 312, h: 240, accent: "#FFA000" },
+    { id: "archive", title: "Archive Hall", label: "LOBBY", x: 456, y: 360, w: 368, h: 238, accent: "#00A884" },
+    { id: "gag", title: "Joke Reliquary", label: "WING 05", x: 898, y: 388, w: 332, h: 240, accent: "#D291E4" },
+    { id: "cast", title: "Cast Wing", label: "WING 06", x: 384, y: 708, w: 512, h: 166, accent: "#EF798A" },
   ];
 }
 
@@ -378,9 +321,9 @@ function MessageBubble({
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#2A3942] bg-[#111B21]/82 p-3">
-      <p className="truncate text-xl font-semibold tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-[#8696A0]">{label}</p>
+    <div className="border border-[#2A3942] bg-[#111B21]/82 p-3">
+      <p className="truncate text-xl font-bold tabular-nums">{value}</p>
+      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#8696A0]">{label}</p>
     </div>
   );
 }
@@ -410,7 +353,7 @@ function ControlButton({
       }}
       onPointerCancel={() => release(direction)}
       onPointerLeave={() => release(direction)}
-      className="flex h-11 w-11 touch-none items-center justify-center rounded-2xl border border-[#2A3942] bg-[#202C33]/95 text-base font-black text-[#E9EDEF] shadow-lg active:bg-[#00A884] active:text-[#06130D]"
+      className="flex h-11 w-11 touch-none items-center justify-center border border-[#2A3942] bg-[#141F19]/95 font-mono text-sm font-bold text-[#E9EDE9] shadow-lg active:bg-[#00A884] active:text-[#06130D]"
     >
       {label}
     </button>
@@ -425,46 +368,63 @@ function Controls({
   release: (direction: Direction) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-1.5">
+    <div className="grid grid-cols-3 gap-1">
       <span />
-      <ControlButton direction="up" label="^" press={press} release={release} />
+      <ControlButton direction="up" label="W" press={press} release={release} />
       <span />
-      <ControlButton direction="left" label="<" press={press} release={release} />
-      <span className="h-11 w-11 rounded-2xl border border-[#2A3942] bg-[#111B21]/80" />
-      <ControlButton direction="right" label=">" press={press} release={release} />
+      <ControlButton direction="left" label="A" press={press} release={release} />
+      <span className="h-11 w-11 border border-[#2A3942]/60 bg-[#0D1512]/80" />
+      <ControlButton direction="right" label="D" press={press} release={release} />
       <span />
-      <ControlButton direction="down" label="v" press={press} release={release} />
+      <ControlButton direction="down" label="S" press={press} release={release} />
       <span />
     </div>
   );
 }
 
-function RoomView({ room }: { room: Room }) {
+function RoomView({ room, visited }: { room: Room; visited: boolean }) {
   return (
     <div
-      className="absolute overflow-hidden rounded-[2rem] border-2 shadow-[0_22px_70px_rgba(0,0,0,0.28)]"
+      className="absolute overflow-hidden border-2 transition-colors duration-700"
       style={{
         left: room.x,
         top: room.y,
         width: room.w,
         height: room.h,
-        borderColor: room.accent,
-        background: room.bg,
+        borderColor: visited ? room.accent : "#22302A",
+        background: `linear-gradient(135deg, ${room.accent}${visited ? "24" : "10"}, rgba(9,14,11,0.98))`,
+        boxShadow: visited ? `inset 0 0 60px ${room.accent}14` : undefined,
       }}
     >
+      {/* parquet floor */}
       <div
-        className="absolute inset-0 opacity-40"
+        className="absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)",
+            "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
         }}
       />
-      <div className="absolute left-4 top-3 rounded-full bg-[#0B141A]/78 px-3 py-1 text-[10px] font-black tracking-[0.18em] text-[#AEBAC1]">
+      {/* baseboard */}
+      <div
+        className="absolute inset-x-0 top-0 h-[6px]"
+        style={{ backgroundColor: visited ? room.accent : "#22302A", opacity: 0.55 }}
+      />
+      <div className="absolute left-3 top-3 border border-current/0 bg-[#06130D]/80 px-2 py-0.5 font-mono text-[9px] font-bold tracking-[0.22em] text-[#8FA396]">
         {room.label}
       </div>
-      <div className="absolute bottom-3 left-4 right-4 truncate text-sm font-semibold text-[#E9EDEF]">
-        {room.title}
+      <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between gap-2">
+        <span className="truncate font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#E9EDE9]/80">
+          {room.title}
+        </span>
+        {visited && (
+          <span
+            className="shrink-0 font-mono text-[9px] font-bold tracking-[0.14em]"
+            style={{ color: room.accent }}
+          >
+            LOGGED
+          </span>
+        )}
       </div>
     </div>
   );
@@ -473,24 +433,28 @@ function RoomView({ room }: { room: Room }) {
 function CorridorView({ zone }: { zone: Zone }) {
   return (
     <div
-      className="absolute rounded-[1.6rem] border border-[#2A3942] bg-[#101B21]"
+      className="absolute border border-[#1C2822] bg-[#0C1310]"
       style={{ left: zone.x, top: zone.y, width: zone.w, height: zone.h }}
-    />
+    >
+      <div
+        className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "34px 34px",
+        }}
+      />
+    </div>
   );
 }
 
-function MiniMessageWall({
-  turns,
-}: {
-  turns: ConversationTurn[];
-}) {
+function MiniMessageWall({ turns }: { turns: ConversationTurn[] }) {
   return (
     <div className="flex flex-col gap-1.5">
       {turns.slice(0, 3).map((turn, index) => (
         <div
           key={`${turn.sender}-${index}`}
-          className={`max-w-[90%] rounded-xl px-2 py-1 text-[10px] leading-tight ${
-            index % 2 === 0 ? "ml-auto bg-[#005C4B]" : "bg-[#202C33]"
+          className={`max-w-[90%] rounded-lg px-2 py-1 text-[10px] leading-tight ${
+            index % 2 === 0 ? "ml-auto bg-[#005C4B]" : "bg-[#1D2620]"
           }`}
         >
           <span className="font-semibold">{cleanDisplayCopy(turn.sender)}: </span>
@@ -506,158 +470,181 @@ function ExhibitObject({
   wrapped,
   stats,
   isNear,
+  isInspected,
   onInspect,
 }: {
   exhibit: Exhibit;
   wrapped: WrappedResult;
   stats: ChatStats;
   isNear: boolean;
+  isInspected: boolean;
   onInspect: (exhibit: Exhibit) => void;
 }) {
-  const base =
-    "absolute z-20 overflow-hidden rounded-2xl border bg-[#111B21]/94 p-2 text-left shadow-[0_12px_35px_rgba(0,0,0,0.32)] backdrop-blur-sm transition";
-  const ring = isNear ? "scale-[1.03] border-[#D9FDD3]" : "border-[#2A3942]";
-
   return (
     <button
       type="button"
-      onClick={() => onInspect(exhibit)}
-      className={`${base} ${ring}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onInspect(exhibit);
+      }}
+      className={`absolute z-20 overflow-visible border bg-[#101813]/95 p-2 text-left shadow-[0_12px_35px_rgba(0,0,0,0.4)] transition-transform ${
+        isNear ? "scale-[1.04] border-[#D9FDD3]" : "border-[#26332C]"
+      }`}
       style={{
         left: exhibit.x,
         top: exhibit.y,
         width: exhibit.w,
         height: exhibit.h,
         boxShadow: isNear
-          ? `0 0 0 3px ${exhibit.accent}55, 0 18px 44px rgba(0,0,0,0.36)`
+          ? `0 0 0 3px ${exhibit.accent}66, 0 18px 44px rgba(0,0,0,0.4)`
           : undefined,
       }}
     >
-      {exhibit.kind === "moment" && (
-        <>
-          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#25D366]">
-            Canon Event
-          </p>
-          <MiniMessageWall turns={wrapped.momentOfTheYear.exchange} />
-        </>
+      {/* pulsing interaction ring */}
+      {isNear && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-3 animate-ping border"
+          style={{ borderColor: `${exhibit.accent}88`, animationDuration: "1.6s" }}
+        />
       )}
 
-      {exhibit.kind === "quote" && (
-        <div className="flex h-full flex-col justify-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#53BDEB]">
-            Quote
-          </p>
-          <p
-            className="mt-2 text-sm font-semibold leading-tight"
-            style={{
-              display: "-webkit-box",
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {cleanDisplayCopy(wrapped.quoteOfTheYear.text)}
-          </p>
-        </div>
+      {/* inspected stamp */}
+      {isInspected && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-2 -top-2 z-10 flex h-5 w-5 rotate-12 items-center justify-center border font-mono text-[9px] font-bold"
+          style={{
+            borderColor: exhibit.accent,
+            color: exhibit.accent,
+            backgroundColor: "#06130D",
+          }}
+        >
+          ✓
+        </span>
       )}
 
-      {exhibit.kind === "photos" && exhibit.imageUrl && (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={exhibit.imageUrl}
-            alt={exhibit.subtitle}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-[9px] font-bold text-white">
-            {exhibit.subtitle}
-          </div>
-        </>
-      )}
-
-      {exhibit.kind === "photos" && !exhibit.imageUrl && (
-        <div className="flex h-full flex-col justify-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#6BCF9C]">
-            Receipts
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {stats.topEmojisOverall.slice(0, 6).map((emoji) => (
-              <span key={emoji.emoji} className="rounded-full bg-[#202C33] px-2 py-1 text-xs">
-                {emoji.emoji}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {exhibit.kind === "stats" && (
-        <div className="flex h-full flex-col justify-between">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#FFA000]">
-            Arcade
-          </p>
-          <div>
-            <p className="text-2xl font-semibold tabular-nums">
-              {formatCount(stats.totalMessages)}
+      <div className="h-full w-full overflow-hidden">
+        {exhibit.kind === "moment" && (
+          <>
+            <p className="mb-2 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#25D366]">
+              Canon Event
             </p>
-            <p className="text-xs text-[#AEBAC1]">messages</p>
+            <MiniMessageWall turns={wrapped.momentOfTheYear.exchange} />
+          </>
+        )}
+
+        {exhibit.kind === "quote" && (
+          <div className="flex h-full flex-col justify-center">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#53BDEB]">
+              Quote
+            </p>
+            <p
+              className="mt-2 text-sm font-semibold leading-tight"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {cleanDisplayCopy(wrapped.quoteOfTheYear.text)}
+            </p>
           </div>
-          <p className="truncate text-xs text-[#8696A0]">
-            {stats.yapper?.name ? cleanDisplayCopy(stats.yapper.name) : "No winner"}
-          </p>
-        </div>
-      )}
+        )}
 
-      {exhibit.kind === "gag" && (
-        <div className="flex h-full flex-col justify-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#D291E4]">
-            Joke Case
-          </p>
-          <p className="mt-2 text-xl font-semibold leading-tight">
-            {cleanDisplayCopy(wrapped.runningGag.name)}
-          </p>
-          <p className="mt-1 text-xs text-[#AEBAC1]">
-            {wrapped.runningGag.mentions.length} sightings
-          </p>
-        </div>
-      )}
+        {exhibit.kind === "photos" && exhibit.imageUrl && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={exhibit.imageUrl}
+              alt={exhibit.subtitle}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 font-mono text-[8px] font-bold text-white">
+              {exhibit.subtitle}
+            </div>
+          </>
+        )}
 
-      {exhibit.kind === "archive" && (
-        <div className="flex h-full flex-col justify-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#00A884]">
-            Pass
-          </p>
-          <p className="mt-2 truncate text-lg font-semibold">{exhibit.title}</p>
-          <p className="truncate text-xs text-[#AEBAC1]">{exhibit.subtitle}</p>
-        </div>
-      )}
-
-      {exhibit.kind === "cast" && (
-        <div className="flex h-full flex-col items-center justify-center text-center">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-black text-[#06130D]"
-            style={{ backgroundColor: exhibit.accent }}
-          >
-            {initials(exhibit.title)}
+        {exhibit.kind === "photos" && !exhibit.imageUrl && (
+          <div className="flex h-full flex-col justify-center">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#6BCF9C]">
+              Receipts
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {stats.topEmojisOverall.slice(0, 6).map((emoji) => (
+                <span key={emoji.emoji} className="rounded-full bg-[#1D2620] px-2 py-1 text-xs">
+                  {emoji.emoji}
+                </span>
+              ))}
+            </div>
           </div>
-          <p className="mt-1 max-w-full truncate text-xs font-semibold">{exhibit.title}</p>
-        </div>
-      )}
+        )}
+
+        {exhibit.kind === "stats" && (
+          <div className="flex h-full flex-col justify-between">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#FFA000]">
+              Arcade
+            </p>
+            <div>
+              <p className="text-2xl font-bold tabular-nums">{formatCount(stats.totalMessages)}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#8FA396]">messages</p>
+            </div>
+            <p className="truncate font-mono text-[10px] text-[#8696A0]">
+              {stats.yapper?.name ? cleanDisplayCopy(stats.yapper.name) : "No winner"}
+            </p>
+          </div>
+        )}
+
+        {exhibit.kind === "gag" && (
+          <div className="flex h-full flex-col justify-center">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#D291E4]">
+              Joke Case
+            </p>
+            <p className="mt-2 text-xl font-bold leading-tight">
+              {cleanDisplayCopy(wrapped.runningGag.name)}
+            </p>
+            <p className="mt-1 font-mono text-[10px] text-[#8FA396]">
+              {wrapped.runningGag.mentions.length} sightings
+            </p>
+          </div>
+        )}
+
+        {exhibit.kind === "archive" && (
+          <div className="flex h-full flex-col justify-center">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#00A884]">
+              Pass
+            </p>
+            <p className="mt-2 truncate text-lg font-bold">{exhibit.title}</p>
+            <p className="truncate font-mono text-[10px] text-[#8FA396]">{exhibit.subtitle}</p>
+          </div>
+        )}
+
+        {exhibit.kind === "cast" && (
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-full font-mono text-xs font-bold text-[#06130D]"
+              style={{ backgroundColor: exhibit.accent }}
+            >
+              {initials(exhibit.title)}
+            </div>
+            <p className="mt-1 max-w-full truncate text-xs font-semibold">{exhibit.title}</p>
+          </div>
+        )}
+      </div>
     </button>
   );
 }
 
-function PersonalityDetail({
-  personality,
-}: {
-  personality: PersonalityEvidence;
-}) {
+function PersonalityDetail({ personality }: { personality: PersonalityEvidence }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-2xl border border-[#2A3942] bg-[#111B21] p-4">
-        <p className="text-sm font-semibold text-[#25D366]">
+      <div className="border border-[#2A3942] bg-[#111B21] p-4">
+        <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-[#25D366]">
           {cleanDisplayCopy(personality.member)}
         </p>
-        <h3 className="mt-2 text-3xl font-semibold leading-tight">
+        <h3 className="mt-2 text-3xl font-black uppercase leading-tight tracking-tight">
           {cleanDisplayCopy(personality.archetype)}
         </h3>
         <p className="mt-3 text-sm leading-6 text-[#AEBAC1]">
@@ -667,7 +654,7 @@ function PersonalityDetail({
       {personality.evidenceQuotes.slice(0, 3).map((quote, index) => (
         <div
           key={`${quote}-${index}`}
-          className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${WHATSAPP_RECEIVED_BUBBLE}`}
+          className={`max-w-[88%] rounded-2xl rounded-bl-md px-3 py-2 text-sm leading-relaxed ${WHATSAPP_RECEIVED_BUBBLE}`}
         >
           {cleanDisplayCopy(quote)}
         </div>
@@ -698,7 +685,7 @@ function ExhibitDetail({
 
   if (exhibit.kind === "archive") {
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <StatTile label="messages" value={formatCount(stats.totalMessages)} />
         <StatTile label="members" value={formatCount(stats.members.length)} />
         <StatTile
@@ -714,14 +701,14 @@ function ExhibitDetail({
     return (
       <div className="flex flex-col gap-3">
         <div>
-          <p className="text-xs font-medium text-[#8696A0]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8696A0]">
             {cleanDisplayCopy(wrapped.momentOfTheYear.date)}
           </p>
-          <h3 className="mt-1 text-2xl font-semibold leading-tight">
+          <h3 className="mt-1 text-2xl font-black uppercase leading-tight tracking-tight">
             {cleanDisplayCopy(wrapped.momentOfTheYear.title)}
           </h3>
         </div>
-        <div className="wa-message-scroll flex max-h-[46vh] flex-col gap-2 overflow-y-auto rounded-3xl border border-[#2A3942] p-3">
+        <div className="wa-message-scroll flex max-h-[46vh] flex-col gap-2 overflow-y-auto border border-[#2A3942] p-3">
           {wrapped.momentOfTheYear.exchange.map((turn, index) => (
             <MessageBubble
               key={`${turn.sender}-${index}`}
@@ -738,7 +725,7 @@ function ExhibitDetail({
   if (exhibit.kind === "quote") {
     return (
       <div className="flex flex-col items-center gap-4 text-center">
-        <span className="rounded-full border border-[#2A3942] bg-[#111B21] px-3 py-1 text-[10px] font-medium text-[#8696A0]">
+        <span className="border border-[#2A3942] bg-[#111B21] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#8696A0]">
           {cleanDisplayCopy(wrapped.quoteOfTheYear.date)}
         </span>
         <div
@@ -765,7 +752,7 @@ function ExhibitDetail({
           {mediaHighlights.slice(0, 9).map((highlight, index) => (
             <div
               key={`${highlight.sender}-${index}`}
-              className="relative aspect-square overflow-hidden rounded-xl border border-[#2A3942] bg-[#111B21]"
+              className="relative aspect-square overflow-hidden border border-[#2A3942] bg-[#111B21]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -773,7 +760,7 @@ function ExhibitDetail({
                 alt={`Photo from ${cleanDisplayCopy(highlight.sender)}`}
                 className="h-full w-full object-cover"
               />
-              <span className="absolute bottom-1 left-1 max-w-[80%] truncate rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+              <span className="absolute bottom-1 left-1 max-w-[80%] truncate bg-black/60 px-1.5 py-0.5 font-mono text-[8px] font-semibold text-white">
                 {cleanDisplayCopy(highlight.sender)}
               </span>
             </div>
@@ -809,7 +796,7 @@ function ExhibitDetail({
     const topMembers = stats.members.slice(0, 5);
     return (
       <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <StatTile label="total words" value={formatCount(stats.totalWords)} />
           <StatTile label="media posts" value={formatCount(stats.totalMedia)} />
           <StatTile label="busiest day" value={stats.busiestDay.day} />
@@ -818,8 +805,8 @@ function ExhibitDetail({
             value={stats.airballs[0]?.name ? cleanDisplayCopy(stats.airballs[0].name) : "None"}
           />
         </div>
-        <div className="rounded-2xl border border-[#2A3942] bg-[#111B21] p-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#FFA000]">
+        <div className="border border-[#2A3942] bg-[#111B21] p-3">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#FFA000]">
             Leaderboard
           </p>
           <div className="mt-3 flex flex-col gap-3">
@@ -832,12 +819,12 @@ function ExhibitDetail({
                     <span className="truncate font-semibold">
                       {index + 1}. {cleanDisplayCopy(member.name)}
                     </span>
-                    <span className="shrink-0 text-[#AEBAC1]">
+                    <span className="shrink-0 tabular-nums text-[#AEBAC1]">
                       {formatCount(member.messageCount)}
                     </span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-[#202C33]">
-                    <div className="h-full rounded-full bg-[#00A884]" style={{ width }} />
+                  <div className="h-1.5 overflow-hidden bg-[#1D2620]">
+                    <div className="h-full bg-[#00A884]" style={{ width }} />
                   </div>
                 </div>
               );
@@ -852,27 +839,25 @@ function ExhibitDetail({
     return (
       <div className="flex flex-col gap-4">
         <div>
-          <h3 className="text-3xl font-semibold leading-tight">
+          <h3 className="text-3xl font-black uppercase leading-tight tracking-tight">
             {cleanDisplayCopy(wrapped.runningGag.name)}
           </h3>
-          <p className="mt-1 text-sm text-[#8696A0]">
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-[#8696A0]">
             {wrapped.runningGag.mentions.length} recorded sightings
           </p>
         </div>
-        <div className="flex max-h-[46vh] flex-col gap-3 overflow-y-auto">
+        <div className="flex max-h-[46vh] flex-col gap-2 overflow-y-auto">
           {wrapped.runningGag.mentions.map((mention, index) => (
-            <div key={`${mention.sender}-${index}`} className="rounded-2xl border border-[#2A3942] bg-[#111B21] p-3">
+            <div key={`${mention.sender}-${index}`} className="border border-[#2A3942] bg-[#111B21] p-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <p className="truncate text-sm font-semibold">
                   {cleanDisplayCopy(mention.sender)}
                 </p>
-                <p className="shrink-0 text-[10px] font-medium text-[#8696A0]">
+                <p className="shrink-0 font-mono text-[10px] text-[#8696A0]">
                   {cleanDisplayCopy(mention.date)}
                 </p>
               </div>
-              <p className="text-sm leading-6 text-[#E9EDEF]">
-                {cleanDisplayCopy(mention.text)}
-              </p>
+              <p className="text-sm leading-6 text-[#E9EDEF]">{cleanDisplayCopy(mention.text)}</p>
             </div>
           ))}
         </div>
@@ -902,21 +887,26 @@ function ExhibitSheet({
 }) {
   return (
     <motion.div
-      className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-[70] mx-auto max-h-[68dvh] max-w-xl overflow-hidden rounded-[2rem] border border-[#2A3942] bg-[#111B21]/98 text-[#E9EDEF] shadow-[0_28px_90px_rgba(0,0,0,0.56)] backdrop-blur-xl"
-      initial={{ opacity: 0, y: 28, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 24, scale: 0.98 }}
+      className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-[70] mx-auto max-h-[68dvh] max-w-xl overflow-hidden border border-[#2A3942] bg-[#0C1310]/98 text-[#E9EDEF] shadow-[0_28px_90px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+      initial={{ opacity: 0, y: 28 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 24 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-[#2A3942] bg-[#202C33] px-4 py-3">
+      <div
+        className="flex items-center justify-between gap-3 border-b px-4 py-3"
+        style={{ borderColor: `${exhibit.accent}44`, backgroundColor: `${exhibit.accent}12` }}
+      >
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{cleanDisplayCopy(exhibit.title)}</p>
-          <p className="truncate text-xs text-[#8696A0]">{cleanDisplayCopy(exhibit.subtitle)}</p>
+          <p className="font-mono text-[9px] font-bold uppercase tracking-[0.22em]" style={{ color: exhibit.accent }}>
+            Exhibit record
+          </p>
+          <p className="truncate text-sm font-bold">{cleanDisplayCopy(exhibit.title)}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-full border border-[#2A3942] bg-[#111B21] px-3 py-1.5 text-xs font-semibold text-[#E9EDEF]"
+          className="shrink-0 border border-[#2A3942] bg-[#111B21] px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#E9EDEF]"
         >
           Close
         </button>
@@ -930,6 +920,85 @@ function ExhibitSheet({
         />
       </div>
     </motion.div>
+  );
+}
+
+function MiniMap({
+  rooms,
+  visitedRooms,
+  player,
+}: {
+  rooms: Room[];
+  visitedRooms: Set<RoomId>;
+  player: Point;
+}) {
+  const scale = 0.078;
+  return (
+    <div
+      className="relative overflow-hidden border border-[#2A3942] bg-[#06130D]/92 shadow-lg backdrop-blur-md"
+      style={{ width: WORLD.w * scale, height: WORLD.h * scale }}
+      aria-hidden
+    >
+      {rooms.map((room) => (
+        <div
+          key={room.id}
+          className="absolute"
+          style={{
+            left: room.x * scale,
+            top: room.y * scale,
+            width: room.w * scale,
+            height: room.h * scale,
+            backgroundColor: visitedRooms.has(room.id) ? `${room.accent}66` : "#1A241E",
+            border: `1px solid ${visitedRooms.has(room.id) ? room.accent : "#26332C"}`,
+          }}
+        />
+      ))}
+      <div
+        className="absolute h-1.5 w-1.5 rounded-full bg-[#D9FDD3] shadow-[0_0_6px_#25D366]"
+        style={{ left: player.x * scale - 3, top: player.y * scale - 3 }}
+      />
+    </div>
+  );
+}
+
+function Player({
+  position,
+  facing,
+  moving,
+}: {
+  position: Point;
+  facing: 1 | -1;
+  moving: boolean;
+}) {
+  return (
+    <div
+      className="absolute z-30"
+      style={{ left: position.x - PLAYER_RADIUS, top: position.y - PLAYER_RADIUS }}
+    >
+      {/* shadow */}
+      <div className="absolute left-1/2 top-[30px] h-2 w-7 -translate-x-1/2 rounded-full bg-black/50 blur-[2px]" />
+      {/* body */}
+      <motion.div
+        className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-[#D9FDD3] bg-[#00A884] shadow-[0_0_44px_rgba(0,168,132,0.55)]"
+        animate={moving ? { y: [0, -3, 0] } : { y: 0 }}
+        transition={
+          moving
+            ? { duration: 0.34, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }
+            : { duration: 0.15 }
+        }
+      >
+        {/* eyes track facing direction */}
+        <div
+          className="flex gap-1.5 transition-transform duration-150"
+          style={{ transform: `translateX(${facing * 3}px)` }}
+        >
+          <span className="h-2 w-1.5 rounded-full bg-[#06130D]" />
+          <span className="h-2 w-1.5 rounded-full bg-[#06130D]" />
+        </div>
+        {/* curator cap */}
+        <span className="absolute -top-1.5 left-1/2 h-1.5 w-5 -translate-x-1/2 rounded-full bg-[#06130D]" />
+      </motion.div>
+    </div>
   );
 }
 
@@ -950,9 +1019,22 @@ export default function MuseumExperience({
   const [visitedRooms, setVisitedRooms] = useState<Set<RoomId>>(() => new Set(["archive"]));
   const [inspected, setInspected] = useState<Set<string>>(() => new Set());
   const [activeExhibit, setActiveExhibit] = useState<Exhibit | null>(null);
+  const [lightsOn, setLightsOn] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [facing, setFacing] = useState<1 | -1>(1);
+  const [footprints, setFootprints] = useState<Footprint[]>([]);
+  const [roomSplash, setRoomSplash] = useState<Room | null>(null);
+  const [celebrated, setCelebrated] = useState(false);
+
   const playerRef = useRef<Point>(START);
   const heldDirections = useRef(new Set<Direction>());
+  const targetRef = useRef<Point | null>(null);
   const sheetOpenRef = useRef(false);
+  const lastFootprintRef = useRef<Point>(START);
+  const footprintIdRef = useRef(0);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const splashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seenRoomsRef = useRef<Set<RoomId>>(new Set(["archive"]));
 
   const currentRoom = useMemo(() => findRoom(player, rooms), [player, rooms]);
   const nearestExhibit = useMemo(() => {
@@ -969,7 +1051,14 @@ export default function MuseumExperience({
     sheetOpenRef.current = activeExhibit !== null;
   }, [activeExhibit]);
 
+  useEffect(() => {
+    return () => {
+      if (splashTimeoutRef.current) clearTimeout(splashTimeoutRef.current);
+    };
+  }, []);
+
   const inspect = useCallback((exhibit: Exhibit) => {
+    targetRef.current = null;
     setActiveExhibit(exhibit);
     setInspected((prev) => {
       if (prev.has(exhibit.id)) return prev;
@@ -980,6 +1069,7 @@ export default function MuseumExperience({
   }, []);
 
   const press = useCallback((direction: Direction) => {
+    targetRef.current = null;
     heldDirections.current.add(direction);
   }, []);
 
@@ -987,22 +1077,52 @@ export default function MuseumExperience({
     heldDirections.current.delete(direction);
   }, []);
 
+  const handleFloorTap = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (sheetOpenRef.current) return;
+    // Exhibits are buttons with their own inspect behavior - don't path to them.
+    if ((event.target as HTMLElement).closest("button")) return;
+    const world = worldRef.current;
+    if (!world) return;
+    const rect = world.getBoundingClientRect();
+    const worldX = ((event.clientX - rect.left) / rect.width) * WORLD.w;
+    const worldY = ((event.clientY - rect.top) / rect.height) * WORLD.h;
+    targetRef.current = { x: worldX, y: worldY };
+  }, []);
+
+  // Movement loop: keys/d-pad take priority, otherwise walk toward tap target.
   useEffect(() => {
     let frame = 0;
     let last = performance.now();
+    let wasMoving = false;
 
     const step = (now: number) => {
       const elapsed = Math.min(40, now - last);
       last = now;
 
+      let didMove = false;
+
       if (!sheetOpenRef.current) {
         const held = heldDirections.current;
         let dx = 0;
         let dy = 0;
-        if (held.has("left")) dx -= 1;
-        if (held.has("right")) dx += 1;
-        if (held.has("up")) dy -= 1;
-        if (held.has("down")) dy += 1;
+
+        if (held.size > 0) {
+          if (held.has("left")) dx -= 1;
+          if (held.has("right")) dx += 1;
+          if (held.has("up")) dy -= 1;
+          if (held.has("down")) dy += 1;
+        } else if (targetRef.current) {
+          const target = targetRef.current;
+          const prev = playerRef.current;
+          const tx = target.x - prev.x;
+          const ty = target.y - prev.y;
+          if (Math.hypot(tx, ty) < 8) {
+            targetRef.current = null;
+          } else {
+            dx = tx;
+            dy = ty;
+          }
+        }
 
         if (dx !== 0 || dy !== 0) {
           const len = Math.hypot(dx, dy) || 1;
@@ -1024,19 +1144,40 @@ export default function MuseumExperience({
           }
 
           if (resolved !== prev) {
+            didMove = true;
             playerRef.current = resolved;
             setPlayer(resolved);
+            if (dx !== 0) setFacing(dx > 0 ? 1 : -1);
+
+            // footprint trail
+            if (distance(resolved, lastFootprintRef.current) > 30) {
+              lastFootprintRef.current = resolved;
+              const id = footprintIdRef.current++;
+              setFootprints((prevPrints) => [...prevPrints.slice(-9), { ...resolved, id }]);
+            }
+
             const room = findRoom(resolved, rooms);
-            if (room) {
+            if (room && !seenRoomsRef.current.has(room.id)) {
+              seenRoomsRef.current.add(room.id);
               setVisitedRooms((prevRooms) => {
-                if (prevRooms.has(room.id)) return prevRooms;
                 const nextRooms = new Set(prevRooms);
                 nextRooms.add(room.id);
                 return nextRooms;
               });
+              setRoomSplash(room);
+              if (splashTimeoutRef.current) clearTimeout(splashTimeoutRef.current);
+              splashTimeoutRef.current = setTimeout(() => setRoomSplash(null), 1600);
             }
+          } else {
+            // blocked while pathing: give up so we don't grind against walls
+            targetRef.current = null;
           }
         }
+      }
+
+      if (didMove !== wasMoving) {
+        wasMoving = didMove;
+        setMoving(didMove);
       }
 
       frame = requestAnimationFrame(step);
@@ -1062,6 +1203,7 @@ export default function MuseumExperience({
       const direction = getDirectionFromKey(event.key);
       if (!direction || activeExhibit) return;
       event.preventDefault();
+      targetRef.current = null;
       heldDirections.current.add(direction);
     };
 
@@ -1079,24 +1221,36 @@ export default function MuseumExperience({
     };
   }, [activeExhibit, inspect, nearestExhibit]);
 
-  const roomName = currentRoom?.title ?? "Museum Floor";
-  const allRoomsVisited = visitedRooms.size === rooms.length;
   const allExhibitsInspected = inspected.size === exhibits.length;
+  const showCertificate = allExhibitsInspected && !celebrated && !activeExhibit;
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#0B141A] text-[#E9EDEF]">
-      <div className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top)+4.85rem)] z-40 flex items-center justify-between gap-3">
-        <div className="min-w-0 rounded-full border border-[#2A3942] bg-[#111B21]/90 px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur-md">
-          <span className="text-[#25D366]">{visitedRooms.size}/{rooms.length}</span>
-          <span className="text-[#8696A0]"> rooms </span>
-          <span className="text-[#25D366]">{inspected.size}/{exhibits.length}</span>
-          <span className="text-[#8696A0]"> exhibits</span>
+    <div className="relative h-dvh w-full overflow-hidden bg-[#040A08] text-[#E9EDEF]">
+      {/* HUD top */}
+      <div className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top)+4.85rem)] z-40 flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="border border-[#2A3942] bg-[#06130D]/92 px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] shadow-lg backdrop-blur-md">
+            <span className="text-[#25D366]">{visitedRooms.size}/{rooms.length}</span>
+            <span className="text-[#8696A0]"> wings · </span>
+            <span className="text-[#25D366]">{inspected.size}/{exhibits.length}</span>
+            <span className="text-[#8696A0]"> exhibits</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLightsOn((prev) => !prev)}
+            className={`pointer-events-auto w-fit border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] shadow-lg backdrop-blur-md transition-colors ${
+              lightsOn
+                ? "border-[#25D366] bg-[#25D366] text-[#06130D]"
+                : "border-[#2A3942] bg-[#06130D]/92 text-[#8FA396]"
+            }`}
+          >
+            {lightsOn ? "Lights on" : "Lights off"}
+          </button>
         </div>
-        <div className="min-w-0 truncate rounded-full border border-[#2A3942] bg-[#111B21]/90 px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur-md">
-          {roomName}
-        </div>
+        <MiniMap rooms={rooms} visitedRooms={visitedRooms} player={player} />
       </div>
 
+      {/* world */}
       <div
         className="absolute left-1/2 top-[54%]"
         style={{
@@ -1104,12 +1258,14 @@ export default function MuseumExperience({
           height: WORLD.h,
           transform: `translate(${-player.x}px, ${-player.y}px)`,
         }}
+        ref={worldRef}
+        onPointerDown={handleFloorTap}
       >
         <div
-          className="absolute inset-0 rounded-[3rem] border border-[#1D2C33] bg-[#071015]"
+          className="absolute inset-0 cursor-pointer border border-[#14201A] bg-[#050C09]"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 18px 18px, rgba(37,211,102,0.09) 1px, transparent 1.2px), radial-gradient(circle at 42px 38px, rgba(255,255,255,0.045) 1px, transparent 1.2px)",
+              "radial-gradient(circle at 18px 18px, rgba(37,211,102,0.08) 1px, transparent 1.2px), radial-gradient(circle at 42px 38px, rgba(255,255,255,0.04) 1px, transparent 1.2px)",
             backgroundSize: "56px 56px",
           }}
         />
@@ -1119,7 +1275,21 @@ export default function MuseumExperience({
         ))}
 
         {rooms.map((room) => (
-          <RoomView key={room.id} room={room} />
+          <RoomView key={room.id} room={room} visited={visitedRooms.has(room.id)} />
+        ))}
+
+        {/* footprints */}
+        {footprints.map((print, index) => (
+          <span
+            key={print.id}
+            aria-hidden
+            className="pointer-events-none absolute z-10 h-1.5 w-1.5 rounded-full bg-[#25D366]"
+            style={{
+              left: print.x - 3,
+              top: print.y + 12,
+              opacity: ((index + 1) / footprints.length) * 0.4,
+            }}
+          />
         ))}
 
         {exhibits.map((exhibit) => (
@@ -1129,21 +1299,68 @@ export default function MuseumExperience({
             wrapped={wrapped}
             stats={stats}
             isNear={nearestExhibit?.id === exhibit.id}
+            isInspected={inspected.has(exhibit.id)}
             onInspect={inspect}
           />
         ))}
 
-        <motion.div
-          className="absolute z-30 flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-[#D9FDD3] bg-[#00A884] text-[9px] font-black text-[#06130D] shadow-[0_14px_38px_rgba(0,168,132,0.42)]"
-          animate={{ left: player.x - 17, top: player.y - 17 }}
-          transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.5 }}
-        >
-          YOU
-        </motion.div>
+        <Player position={player} facing={facing} moving={moving} />
+
+        {/* torch fog-of-war */}
+        {!lightsOn && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-40"
+            style={{
+              background: `radial-gradient(circle ${TORCH_RADIUS}px at ${player.x}px ${player.y}px, transparent 0%, transparent 38%, rgba(3,8,6,0.55) 72%, rgba(3,8,6,0.93) 100%)`,
+            }}
+          />
+        )}
+        {/* warm torch glow */}
+        {!lightsOn && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-40"
+            style={{
+              background: `radial-gradient(circle 130px at ${player.x}px ${player.y}px, rgba(37,211,102,0.07), transparent 70%)`,
+            }}
+          />
+        )}
       </div>
 
+      {/* room splash */}
+      <AnimatePresence>
+        {roomSplash && (
+          <motion.div
+            key={roomSplash.id}
+            className="pointer-events-none fixed inset-x-0 top-[30%] z-50 flex flex-col items-center"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <p
+              className="font-mono text-[10px] font-bold uppercase tracking-[0.3em]"
+              style={{ color: roomSplash.accent }}
+            >
+              {roomSplash.label} — Discovered
+            </p>
+            <p
+              className="mt-1 text-center text-4xl font-black uppercase tracking-tight text-[#E9EDE9] sm:text-5xl"
+              style={{ textShadow: `0 0 60px ${roomSplash.accent}99` }}
+            >
+              {roomSplash.title}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* HUD bottom */}
       <div className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-50 flex items-end justify-between gap-3">
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex flex-col gap-2">
+          <p className="w-fit border border-[#2A3942]/70 bg-[#06130D]/85 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-[#5E6E64] backdrop-blur-sm">
+            Tap floor or WASD to walk
+          </p>
           <Controls press={press} release={release} />
         </div>
 
@@ -1151,13 +1368,15 @@ export default function MuseumExperience({
           <AnimatePresence>
             {nearestExhibit && !activeExhibit && (
               <motion.div
-                className="rounded-2xl border border-[#2A3942] bg-[#111B21]/92 px-3 py-2 text-right text-xs shadow-lg backdrop-blur-md"
+                className="border border-[#2A3942] bg-[#06130D]/94 px-3 py-2 text-right shadow-lg backdrop-blur-md"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
               >
-                <p className="truncate font-semibold">{cleanDisplayCopy(nearestExhibit.title)}</p>
-                <p className="truncate text-[#8696A0]">{cleanDisplayCopy(nearestExhibit.subtitle)}</p>
+                <p className="truncate text-xs font-bold">{cleanDisplayCopy(nearestExhibit.title)}</p>
+                <p className="truncate font-mono text-[10px] text-[#8696A0]">
+                  {cleanDisplayCopy(nearestExhibit.subtitle)}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1165,18 +1384,54 @@ export default function MuseumExperience({
             type="button"
             disabled={!nearestExhibit}
             onClick={() => nearestExhibit && inspect(nearestExhibit)}
-            className="rounded-full bg-[#00A884] px-5 py-3 text-sm font-black text-[#06130D] shadow-lg transition disabled:border disabled:border-[#2A3942] disabled:bg-[#202C33]/88 disabled:text-[#8696A0]"
+            className="bg-[#25D366] px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#06130D] shadow-[0_0_40px_rgba(37,211,102,0.3)] transition disabled:border disabled:border-[#2A3942] disabled:bg-[#141F19]/88 disabled:text-[#5E6E64] disabled:shadow-none"
           >
             Inspect
           </button>
         </div>
       </div>
 
-      {(allRoomsVisited || allExhibitsInspected) && !activeExhibit && (
-        <div className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top)+8.2rem)] z-40 -translate-x-1/2 rounded-full border border-[#00A884]/50 bg-[#003F34]/92 px-4 py-2 text-xs font-semibold text-[#D9FDD3] shadow-lg backdrop-blur-md">
-          {allExhibitsInspected ? "Archive fully inspected" : "All rooms discovered"}
-        </div>
-      )}
+      {/* completion certificate */}
+      <AnimatePresence>
+        {showCertificate && (
+          <motion.div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="w-full max-w-sm border-2 border-[#25D366] bg-[#06130D] p-6 text-center shadow-[0_0_120px_rgba(37,211,102,0.25)]"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+            >
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-[#25D366]">
+                Certificate of completion
+              </p>
+              <p className="mt-4 text-5xl font-black uppercase leading-[0.95] tracking-tight text-[#E9EDE9]">
+                Archive cleared
+              </p>
+              <p className="mt-4 text-sm leading-6 text-[#8FA396]">
+                {`Every exhibit in the ${cleanDisplayCopy(wrapped.groupName)} museum has been inspected. The record is complete.`}
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#5E6E64]">
+                <span>{`${exhibits.length}/${exhibits.length} exhibits`}</span>
+                <span>·</span>
+                <span>{`${rooms.length}/${rooms.length} wings`}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCelebrated(true)}
+                className="mt-6 w-full bg-[#25D366] px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#06130D]"
+              >
+                Keep wandering
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {activeExhibit && (
