@@ -2,7 +2,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildExtractionPrompt, buildSynthesisPrompt, RETRY_REMINDER } from "@/lib/prompts";
 import type { ChatMessage, ChunkExtraction, WrappedResult } from "@/lib/types";
 
-const MODEL = "claude-sonnet-4-6";
+// Extraction is mechanical (find + label real events/quotes verbatim) and
+// runs once per chunk, so it's on Haiku for speed. Synthesis is the one
+// genuinely creative call (the roast/curator voice is the whole point of
+// the product) and runs once total, so it stays on Sonnet for quality.
+const EXTRACTION_MODEL = "claude-haiku-4-5";
+const SYNTHESIS_MODEL = "claude-sonnet-4-6";
 
 interface ChunkRequestBody {
   action: "extractChunk";
@@ -76,27 +81,31 @@ function preview(text: string, max = 1200): string {
 async function callClaudeForJson<T>(
   client: Anthropic,
   label: string,
+  model: string,
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number,
   validate: (x: unknown) => x is T,
-  effort: "low" | "medium" | "high" = "medium"
+  effort?: "low" | "medium" | "high"
 ): Promise<T> {
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: userPrompt }];
+  // Haiku 4.5 doesn't support the effort parameter — only include
+  // output_config when a caller explicitly opts in (Sonnet calls).
+  const outputConfig = effort ? { output_config: { effort } } : {};
 
   log(`${label} → calling Claude`, {
-    model: MODEL,
+    model,
     maxTokens,
-    effort,
+    effort: effort ?? "(unset)",
     promptChars: userPrompt.length,
   });
   const t0 = Date.now();
   const first = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages,
-    output_config: { effort },
+    ...outputConfig,
   });
   log(`${label} ← first response in ${Date.now() - t0}ms`, {
     stopReason: first.stop_reason,
@@ -118,11 +127,11 @@ async function callClaudeForJson<T>(
 
   const t1 = Date.now();
   const retry = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages,
-    output_config: { effort },
+    ...outputConfig,
   });
   log(`${label} ← retry response in ${Date.now() - t1}ms`, {
     stopReason: retry.stop_reason,
@@ -177,11 +186,11 @@ export async function POST(request: Request) {
       const result = await callClaudeForJson(
         client,
         label,
+        EXTRACTION_MODEL,
         SYSTEM_PROMPT,
         prompt,
         4096,
-        isChunkExtraction,
-        "low"
+        isChunkExtraction
       );
       log(`${label} done in ${Date.now() - requestStart}ms`, {
         moments: result.moments.length,
@@ -207,10 +216,12 @@ export async function POST(request: Request) {
       const result = await callClaudeForJson(
         client,
         label,
+        SYNTHESIS_MODEL,
         SYSTEM_PROMPT,
         prompt,
         8192,
-        isWrappedResult
+        isWrappedResult,
+        "medium"
       );
       log(`${label} done in ${Date.now() - requestStart}ms`);
       return Response.json({ result });

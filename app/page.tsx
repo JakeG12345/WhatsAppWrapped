@@ -27,16 +27,21 @@ import type {
   YearSummary,
 } from "@/lib/types";
 
+type AnalyzingStage = "reading" | "tallying" | "writing";
+
 type AppState =
   | { phase: "upload"; error: string | null }
   | { phase: "pickYear"; parsed: ParseResult; years: YearSummary[] }
-  | { phase: "analyzing"; label: string }
+  | { phase: "analyzing"; stage: AnalyzingStage; totalMessages: number }
   | { phase: "ready"; stats: ChatStats; wrapped: WrappedResult };
 
-const CHUNK_SIZE = 300; // messages per Claude extraction call
+// Small chunks + high concurrency + a fast extraction model (Haiku, see
+// app/api/analyze/route.ts) — this beat one giant no-batching call on
+// wall-clock time, since chunk calls run in parallel instead of one call
+// paying for the entire chat's worth of prefill serially.
+const CHUNK_SIZE = 250;
 const MAX_CHUNKS = 40;
-const CONCURRENCY = 4;
-const FUN_EMOJI = ["💀", "👀", "😭", "🔥", "🕵️"];
+const CONCURRENCY = 8;
 
 // Runs async work over `items` with at most `limit` in flight at once —
 // per-chunk Claude calls are independent, so running them one-at-a-time
@@ -63,7 +68,7 @@ async function runRealAnalysis(
   groupName: string | null,
   members: string[],
   chunks: { chunkLabel: string; messages: ChatMessage[] }[],
-  onProgress: (label: string) => void
+  onStage: (stage: AnalyzingStage) => void
 ): Promise<WrappedResult> {
   const recentChunks = chunks.slice(-MAX_CHUNKS);
 
@@ -73,9 +78,8 @@ async function runRealAnalysis(
   );
 
   let completed = 0;
-  onProgress(`Reading ${recentChunks.length} batches of chat... ${FUN_EMOJI[0]}`);
 
-  const settled = await mapWithConcurrency(recentChunks, CONCURRENCY, async (chunk, i) => {
+  const settled = await mapWithConcurrency(recentChunks, CONCURRENCY, async (chunk) => {
     console.log(
       `[runRealAnalysis] starting ${chunk.chunkLabel} — ${chunk.messages.length} messages`
     );
@@ -85,9 +89,6 @@ async function runRealAnalysis(
       completed++;
       console.log(
         `[runRealAnalysis] (${completed}/${recentChunks.length}) finished ${chunk.chunkLabel} in ${Math.round(performance.now() - chunkStart)}ms`
-      );
-      onProgress(
-        `Reading your chat... ${completed}/${recentChunks.length} batches ${FUN_EMOJI[i % FUN_EMOJI.length]}`
       );
       return extraction;
     } catch (err) {
@@ -108,7 +109,7 @@ async function runRealAnalysis(
     throw new Error("No chunks could be analyzed.");
   }
 
-  onProgress("Tallying the receipts...");
+  onStage("tallying");
   const resolvedGroupName = groupName ?? "The Group Chat";
   return synthesize(resolvedGroupName, members, extractions);
 }
@@ -117,7 +118,8 @@ export default function Home() {
   const [state, setState] = useState<AppState>({ phase: "upload", error: null });
 
   async function startAnalysis(parsed: ParseResult, messages: ChatMessage[]) {
-    setState({ phase: "analyzing", label: "Reading your chat..." });
+    const totalMessages = messages.length;
+    setState({ phase: "analyzing", stage: "reading", totalMessages });
 
     const members = Array.from(new Set(messages.map((m) => m.sender)));
     const stats = computeChatStats(messages);
@@ -125,12 +127,12 @@ export default function Home() {
 
     let wrapped: WrappedResult;
     try {
-      wrapped = await runRealAnalysis(parsed.groupName, members, chunks, (label) =>
-        setState({ phase: "analyzing", label })
+      wrapped = await runRealAnalysis(parsed.groupName, members, chunks, (stage) =>
+        setState({ phase: "analyzing", stage, totalMessages })
       );
     } catch (err) {
       console.warn("Falling back to mock analysis:", err);
-      setState({ phase: "analyzing", label: "Writing the awards speech..." });
+      setState({ phase: "analyzing", stage: "writing", totalMessages });
       wrapped = generateMockWrappedResult(parsed.groupName, stats);
     }
 
@@ -138,7 +140,7 @@ export default function Home() {
   }
 
   async function handleFile(file: File) {
-    setState({ phase: "analyzing", label: "Reading your chat..." });
+    setState({ phase: "analyzing", stage: "reading", totalMessages: 0 });
 
     const text = await file.text();
     const parsed = parseWhatsAppChat(text);
@@ -186,7 +188,7 @@ export default function Home() {
   }
 
   if (state.phase === "analyzing") {
-    return <AnalyzingScreen label={state.label} />;
+    return <AnalyzingScreen stage={state.stage} totalMessages={state.totalMessages} />;
   }
 
   const { stats, wrapped } = state;
