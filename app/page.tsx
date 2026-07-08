@@ -384,6 +384,7 @@ export default function Home() {
       <Upload
         onFile={handleFile}
         error={state.phase === "upload" ? state.error : null}
+        userName={user?.name}
         onBack={
           state.phase === "upload" && entries.length > 0
             ? () => setState({ phase: "district" })

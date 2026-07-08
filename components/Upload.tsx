@@ -7,6 +7,8 @@ interface UploadProps {
   error?: string | null;
   /** When set, shows a back button returning to the Archive District. */
   onBack?: () => void;
+  /** Signed-in curator name; when null/undefined a sign-in link is shown. */
+  userName?: string | null;
 }
 
 const MARQUEE_ITEMS = [
@@ -18,7 +20,7 @@ const MARQUEE_ITEMS = [
   "THE RECEIPTS",
 ];
 
-export default function Upload({ onFile, error, onBack }: UploadProps) {
+export default function Upload({ onFile, error, onBack, userName }: UploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +48,24 @@ export default function Upload({ onFile, error, onBack }: UploadProps) {
         ) : (
           <p className="mono-label text-muted">WhatsApp Wrapped</p>
         )}
-        <p className="mono-label text-muted">Vol. {new Date().getFullYear()}</p>
+        <span className="flex items-center gap-4">
+          {userName ? (
+            <a
+              href="/settings"
+              className="mono-label text-primary underline-offset-4 hover:underline"
+            >
+              {userName}
+            </a>
+          ) : (
+            <a
+              href="/sign-in"
+              className="mono-label border border-border px-2.5 py-1.5 text-muted transition-colors hover:border-primary hover:text-primary"
+            >
+              Sign in
+            </a>
+          )}
+          <p className="mono-label text-muted">Vol. {new Date().getFullYear()}</p>
+        </span>
       </header>
 
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-6 sm:px-6">
