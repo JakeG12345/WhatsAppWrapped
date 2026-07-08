@@ -56,7 +56,7 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
     stage === "reading"
       ? `Reading ${messagesRead.toLocaleString()}/${totalMessages.toLocaleString()} messages...`
       : stage === "tallying"
-        ? "Tallying the receipts..."
+        ? "Compiling the verdict..."
         : "Writing the awards speech...";
 
   return (

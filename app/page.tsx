@@ -39,9 +39,22 @@ type AppState =
 // app/api/analyze/route.ts) — this beat one giant no-batching call on
 // wall-clock time, since chunk calls run in parallel instead of one call
 // paying for the entire chat's worth of prefill serially.
-const CHUNK_SIZE = 250;
-const MAX_CHUNKS = 40;
-const CONCURRENCY = 8;
+//
+// Chunk size scales with chat length instead of being fixed: a fixed size
+// means long chats just produce more chunks, and MAX_CHUNKS capping them
+// to the most recent N throws away coverage without bounding wall time
+// (still MAX_CHUNKS / CONCURRENCY rounds either way). Scaling chunk size so
+// the chunk *count* stays near TARGET_CHUNKS keeps both the call count and
+// the round count roughly constant regardless of chat size.
+const TARGET_CHUNKS = 16;
+const MIN_CHUNK_SIZE = 150;
+const MAX_CHUNK_SIZE = 800;
+const MAX_CHUNKS = 24; // hard cap — with CONCURRENCY below, at most 2 rounds
+const CONCURRENCY = 12;
+
+function dynamicChunkSize(messageCount: number): number {
+  return Math.max(MIN_CHUNK_SIZE, Math.min(MAX_CHUNK_SIZE, Math.ceil(messageCount / TARGET_CHUNKS)));
+}
 
 // Runs async work over `items` with at most `limit` in flight at once —
 // per-chunk Claude calls are independent, so running them one-at-a-time
@@ -123,7 +136,7 @@ export default function Home() {
 
     const members = Array.from(new Set(messages.map((m) => m.sender)));
     const stats = computeChatStats(messages);
-    const chunks = chunkMessagesByCount(messages, CHUNK_SIZE);
+    const chunks = chunkMessagesByCount(messages, dynamicChunkSize(messages.length));
 
     let wrapped: WrappedResult;
     try {

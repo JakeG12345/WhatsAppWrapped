@@ -28,7 +28,6 @@ export default function TitleCard({
         </h1>
         <p className="mt-2 text-lg text-white/80">
           {memberCount} people. {messageCount.toLocaleString()} messages.
-          One chat that never learned to stop.
         </p>
       </div>
       <p className="text-sm text-white/50">Swipe to begin →</p>

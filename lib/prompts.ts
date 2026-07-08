@@ -2,7 +2,9 @@ import type { ChatMessage } from "./types";
 
 const JSON_RULES = `Respond with ONLY raw JSON matching the schema below. No markdown code fences, no backticks, no commentary before or after, no trailing commas. Output must start with { and end with }.`;
 
-const TONE_RULES = `Voice: museum-curator meets awards-show host. Affectionate roasting, never cruel — do not mock anyone's appearance, mental health, grief, illness, relationships, or other sensitive/personal topics. Be SPECIFIC: use real names, real dates, and real quotes from the transcript. Ban generic observations like "they talk a lot" or "the group is close" — every line must reference something that actually happened in the chat.`;
+const TONE_RULES = `Voice: museum-curator meets awards-show host. Affectionate roasting, never cruel — do not mock anyone's appearance, mental health, grief, illness, relationships, or other sensitive/personal topics. Be SPECIFIC: use real names, real dates, and real quotes from the transcript. Ban generic observations like "they talk a lot" or "the group is close" — every line must reference something that actually happened in the chat.
+
+Cut anything that reads like generic AI filler: no stock phrases ("little did they know", "the rest is history", "in the annals of", "one for the history books", "and so it began"), no vague summary sentences that could describe literally any group chat, no restating what a stat already shows in different words. Every sentence must earn its place by adding a specific new fact, name, date, or quote — if you can delete a sentence and lose nothing, delete it.`;
 
 function formatMessages(messages: ChatMessage[], maxChars = 14000): string {
   const lines: string[] = [];
