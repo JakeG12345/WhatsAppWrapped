@@ -156,15 +156,20 @@ export default function DistrictExperience({
   const [visitedLots, setVisitedLots] = useState<Set<string>>(() => new Set());
   const [splash, setSplash] = useState<{ title: string; sub: string; accent: string } | null>(null);
 
+  // playerRef is written only by the movement tick (the sole place the
+  // player moves), never during render — see the rAF loop below.
   const playerRef = useRef(player);
-  playerRef.current = player;
   const keysRef = useRef<Set<string>>(new Set());
   const targetRef = useRef<Point | null>(null);
   const sheetOpenRef = useRef(false);
-  sheetOpenRef.current = sheet.kind !== "none";
+  const visitedLotsRef = useRef<Set<string>>(new Set());
   const worldRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const footprintId = useRef(0);
+
+  useEffect(() => {
+    sheetOpenRef.current = sheet.kind !== "none";
+  }, [sheet]);
 
   // --- Input ---------------------------------------------------------------
   useEffect(() => {
@@ -255,6 +260,7 @@ export default function DistrictExperience({
         },
         24
       );
+      playerRef.current = next;
       setPlayer(next);
 
       if (now - lastFootprint > 210) {
@@ -262,29 +268,30 @@ export default function DistrictExperience({
         const fp = { id: footprintId.current++, x: next.x, y: next.y + 16 };
         setFootprints((prev) => [...prev.slice(-11), fp]);
       }
+
+      // Lot discovery rides the movement tick (the only place the player
+      // moves) instead of an effect reacting to `player` state — the ref
+      // gates duplicates so each lot announces exactly once.
+      for (const lot of lots) {
+        if (visitedLotsRef.current.has(lot.entry.id)) continue;
+        const dist = Math.hypot(next.x - lot.center.x, next.y - lot.center.y);
+        if (dist < 300) {
+          visitedLotsRef.current.add(lot.entry.id);
+          setVisitedLots((prev) => new Set(prev).add(lot.entry.id));
+          setSplash({
+            title: cleanDisplayCopy(lot.entry.chatName),
+            sub: `Museum ${String(lots.indexOf(lot) + 1).padStart(2, "0")} — on the register`,
+            accent: lot.accent,
+          });
+          window.setTimeout(() => setSplash(null), 2400);
+          break;
+        }
+      }
     }
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
-
-  // --- Lot discovery -------------------------------------------------------
-  useEffect(() => {
-    for (const lot of lots) {
-      if (visitedLots.has(lot.entry.id)) continue;
-      const dist = Math.hypot(player.x - lot.center.x, player.y - lot.center.y);
-      if (dist < 300) {
-        setVisitedLots((prev) => new Set(prev).add(lot.entry.id));
-        setSplash({
-          title: cleanDisplayCopy(lot.entry.chatName),
-          sub: `Museum ${String(lots.indexOf(lot) + 1).padStart(2, "0")} — on the register`,
-          accent: lot.accent,
-        });
-        window.setTimeout(() => setSplash(null), 2400);
-        break;
-      }
-    }
-  }, [player, lots, visitedLots]);
+  }, [lots]);
 
   // --- Proximity ------------------------------------------------------------
   const nearLot = useMemo(

@@ -1051,7 +1051,6 @@ export default function MuseumExperience({
     new Set(["archive", ...((initialVisitedRooms ?? []) as RoomId[])])
   );
 
-  const currentRoom = useMemo(() => findRoom(player, rooms), [player, rooms]);
   const nearestExhibit = useMemo(() => {
     let nearest: { exhibit: Exhibit; distance: number } | null = null;
     for (const exhibit of exhibits) {
