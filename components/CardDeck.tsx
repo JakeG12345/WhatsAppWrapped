@@ -41,7 +41,7 @@ export default function CardDeck({ cards, onIndexChange }: CardDeckProps) {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-background">
-      {/* Story progress segments */}
+      {/* Wrapper progress segments */}
       <div className="absolute inset-x-0 top-0 z-20 flex gap-px px-5 pt-[calc(env(safe-area-inset-top)+0.65rem)] sm:px-8">
         {cards.map((_, i) => (
           <div key={i} className="h-0.5 flex-1 overflow-hidden bg-border">

@@ -20,10 +20,10 @@ export default function TitleCard({
     <CardShell eyebrow="Official record">
       <div className="flex flex-col">
         {/* Giant year masthead */}
-        <p className="text-[32vw] font-black leading-[0.82] tracking-tighter tabular-nums text-primary sm:text-[11rem]">
+        <p className="text-[32vw] font-black leading-[0.82] tracking-normal tabular-nums text-primary sm:text-[11rem]">
           {year}
         </p>
-        <h1 className="mt-2 text-balance text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-5xl">
+        <h1 className="mt-2 text-balance text-4xl font-black uppercase leading-[0.95] tracking-normal sm:text-5xl">
           {displayGroupName}
         </h1>
         <p className="mono-label mt-3 text-muted">The year in review</p>

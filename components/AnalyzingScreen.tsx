@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import BrandMark from "./BrandMark";
 
 const STATUS_LINES = [
   "reading the export",
@@ -69,13 +70,7 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
     <main className="flex h-dvh w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
         <span className="flex items-center gap-2">
-          <img
-            src="/brand/whatsapp.svg"
-            alt=""
-            width={16}
-            height={16}
-            className="h-4 w-4"
-          />
+          <BrandMark />
           <p className="mono-label text-muted">WhatsApp Wrapped</p>
         </span>
         <p className="mono-label flex items-center gap-2 text-primary">
@@ -91,7 +86,7 @@ export default function AnalyzingScreen({ stage, totalMessages }: AnalyzingScree
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 sm:px-6">
         {/* Giant percent readout */}
         <div className="flex items-end justify-between border-b border-border pb-4">
-          <p className="text-[26vw] font-black leading-[0.85] tracking-tighter tabular-nums sm:text-9xl">
+          <p className="text-[26vw] font-black leading-[0.85] tracking-normal tabular-nums sm:text-9xl">
             {Math.floor(percent)}
             <span className="text-primary">%</span>
           </p>

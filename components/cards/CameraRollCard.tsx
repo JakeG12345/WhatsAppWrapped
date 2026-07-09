@@ -6,7 +6,7 @@ export default function CameraRollCard({ highlights }: { highlights: MediaHighli
   return (
     <CardShell eyebrow="Photographic evidence">
       <div className="flex items-end justify-between gap-4">
-        <h2 className="text-balance text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-5xl">
+        <h2 className="text-balance text-4xl font-black uppercase leading-[0.95] tracking-normal sm:text-5xl">
           The year in photos
         </h2>
         <p className="shrink-0 text-right font-mono text-4xl font-bold leading-none tabular-nums text-primary">

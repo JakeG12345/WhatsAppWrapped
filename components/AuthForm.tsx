@@ -44,7 +44,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         <p className="mono-label text-primary">
           {isSignUp ? "New curator record" : "Returning curator"}
         </p>
-        <h1 className="mt-2 text-balance text-5xl font-black uppercase leading-[0.9] tracking-tight">
+        <h1 className="mt-2 text-balance text-5xl font-black uppercase leading-[0.9] tracking-normal">
           {isSignUp ? "Register the archive" : "Open the archive"}
         </h1>
         <p className="mono-label mt-3 text-muted">

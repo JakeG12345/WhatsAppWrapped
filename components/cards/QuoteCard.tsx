@@ -22,12 +22,12 @@ export default function QuoteCard({ quote }: { quote: QuoteCandidate }) {
           &ldquo;
         </span>
         <blockquote
-          className={`text-balance font-black leading-[1.05] tracking-tight ${sizeClass}`}
+          className={`text-balance font-black leading-[1.05] tracking-normal ${sizeClass}`}
         >
           {text}
         </blockquote>
         <div className="mt-6 flex items-baseline gap-3 border-t border-border pt-4">
-          <cite className="not-italic text-lg font-black uppercase tracking-tight text-primary">
+          <cite className="not-italic text-lg font-black uppercase tracking-normal text-primary">
             {cleanDisplayCopy(quote.sender)}
           </cite>
           <span className="mono-label text-muted">

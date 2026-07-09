@@ -12,6 +12,7 @@ import type { ArchiveEntry } from "@/lib/archive";
 import type { DistrictPerson } from "@/lib/people";
 import { buildDistrictPeople, districtConnectors } from "@/lib/people";
 import { cleanDisplayCopy } from "@/lib/copy";
+import GameAvatar from "./GameAvatar";
 
 // ---------------------------------------------------------------------------
 // World geometry
@@ -157,7 +158,7 @@ export default function DistrictExperience({
   const [splash, setSplash] = useState<{ title: string; sub: string; accent: string } | null>(null);
 
   // playerRef is written only by the movement tick (the sole place the
-  // player moves), never during render — see the rAF loop below.
+  // player moves), never during render - see the rAF loop below.
   const playerRef = useRef(player);
   const keysRef = useRef<Set<string>>(new Set());
   const targetRef = useRef<Point | null>(null);
@@ -270,7 +271,7 @@ export default function DistrictExperience({
       }
 
       // Lot discovery rides the movement tick (the only place the player
-      // moves) instead of an effect reacting to `player` state — the ref
+      // moves) instead of an effect reacting to `player` state - the ref
       // gates duplicates so each lot announces exactly once.
       for (const lot of lots) {
         if (visitedLotsRef.current.has(lot.entry.id)) continue;
@@ -280,7 +281,7 @@ export default function DistrictExperience({
           setVisitedLots((prev) => new Set(prev).add(lot.entry.id));
           setSplash({
             title: cleanDisplayCopy(lot.entry.chatName),
-            sub: `Museum ${String(lots.indexOf(lot) + 1).padStart(2, "0")} — on the register`,
+            sub: `Museum ${String(lots.indexOf(lot) + 1).padStart(2, "0")} - on the register`,
             accent: lot.accent,
           });
           window.setTimeout(() => setSplash(null), 2400);
@@ -442,7 +443,7 @@ export default function DistrictExperience({
             {/* pediment */}
             <span className="absolute -top-4 left-1/2 h-0 w-0 -translate-x-1/2 border-x-[46px] border-b-[16px] border-x-transparent border-b-[#1E2A20]" />
             <span className="mono-label block text-[#25D366]">Records</span>
-            <span className="block text-lg font-black uppercase leading-none tracking-tight">Office</span>
+            <span className="block text-lg font-black uppercase leading-none tracking-normal">Office</span>
             <span className="mt-1.5 flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <span key={i} className="h-4 w-2 bg-[#16241A]" />
@@ -451,7 +452,7 @@ export default function DistrictExperience({
           </span>
           {nearRecords && (
             <span className="mono-label absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap bg-[#25D366] px-2 py-1 text-[#04140A]">
-              E / tap — Enter
+              Enter
             </span>
           )}
         </button>
@@ -483,7 +484,7 @@ export default function DistrictExperience({
                 <span className="mono-label block" style={{ color: lot.accent }}>
                   {`Museum ${String(i + 1).padStart(2, "0")}${lot.entry.year ? ` · ${lot.entry.year}` : ""}`}
                 </span>
-                <span className="mt-1 block truncate text-2xl font-black uppercase leading-[0.95] tracking-tight">
+                <span className="mt-1 block truncate text-2xl font-black uppercase leading-[0.95] tracking-normal">
                   {cleanDisplayCopy(lot.entry.chatName)}
                 </span>
                 <span className="mono-label mt-2 block text-[#7D8880]">
@@ -513,7 +514,7 @@ export default function DistrictExperience({
                 <span className="mono-label absolute left-1/2 top-full mt-3 -translate-x-1/2 animate-pulse whitespace-nowrap px-2 py-1"
                   style={{ backgroundColor: lot.accent, color: "#04140A" }}
                 >
-                  E / tap — Enter museum
+                  Enter museum
                 </span>
               )}
             </button>
@@ -554,7 +555,7 @@ export default function DistrictExperience({
               </span>
               {isNear && (
                 <span className="mono-label absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap bg-[#E9B44C] px-2 py-1 text-[#141005]">
-                  E / tap — Read plaque
+                  Read plaque
                 </span>
               )}
             </button>
@@ -576,7 +577,7 @@ export default function DistrictExperience({
             <span className="mono-label block text-[#55605A] transition-colors group-hover:text-[#25D366]">
               Vacant lot
             </span>
-            <span className="mt-1 block text-xl font-black uppercase leading-none tracking-tight text-[#7D8880]">
+            <span className="mt-1 block text-xl font-black uppercase leading-none tracking-normal text-[#7D8880]">
               + Fund a museum
             </span>
             <span className="mono-label mt-2 block text-[#3D4A40]">Upload another chat export</span>
@@ -588,16 +589,7 @@ export default function DistrictExperience({
           className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
           style={{ left: player.x, top: player.y }}
         >
-          <div
-            className={`relative transition-transform ${moving ? "animate-[walkbob_0.4s_ease-in-out_infinite]" : ""}`}
-            style={{ transform: `scaleX(${facing})` }}
-          >
-            <div className="h-5 w-5 rounded-full border-2 border-[#25D366] bg-[#0B120D]">
-              <span className="absolute left-[11px] top-[5px] h-1 w-1 rounded-full bg-[#25D366]" />
-            </div>
-            <div className="mx-auto mt-0.5 h-4 w-4 border-2 border-t-0 border-[#25D366] bg-[#0B120D]" />
-          </div>
-          <div className="mx-auto mt-1 h-1 w-5 rounded-full bg-black/60 blur-[1px]" />
+          <GameAvatar moving={moving} facing={facing} />
         </div>
 
         {/* fog of war */}
@@ -618,7 +610,7 @@ export default function DistrictExperience({
             {splash.sub}
           </p>
           <p
-            className="mt-1 text-balance text-4xl font-black uppercase leading-none tracking-tight sm:text-5xl"
+            className="mt-1 text-balance text-4xl font-black uppercase leading-none tracking-normal sm:text-5xl"
             style={{ textShadow: `0 0 40px ${splash.accent}66` }}
           >
             {splash.title}
@@ -774,7 +766,7 @@ function PersonSheet({ person, onClose }: { person: DistrictPerson; onClose: () 
       <p className="mono-label text-[#E9B44C]">
         {`District figure · appears in ${person.chats.length} chat${person.chats.length === 1 ? "" : "s"}`}
       </p>
-      <h2 className="mt-2 text-balance text-4xl font-black uppercase leading-[0.92] tracking-tight">
+      <h2 className="mt-2 text-balance text-4xl font-black uppercase leading-[0.92] tracking-normal">
         {cleanDisplayCopy(person.displayName)}
       </h2>
 
@@ -858,7 +850,7 @@ function RecordsSheet({
   return (
     <SheetFrame accent="#25D366" onClose={onClose}>
       <p className="mono-label text-[#25D366]">Records Office · district ledger</p>
-      <h2 className="mt-2 text-4xl font-black uppercase leading-[0.92] tracking-tight">
+      <h2 className="mt-2 text-4xl font-black uppercase leading-[0.92] tracking-normal">
         The full account
       </h2>
 
@@ -913,7 +905,7 @@ function RecordsSheet({
       {connectors.length > 0 && (
         <>
           <p className="mono-label mt-6 border-b border-[#242C25] pb-2 text-[#7D8880]">
-            {`Connectors — in multiple chats (${connectors.length})`}
+            {`Connectors - in multiple chats (${connectors.length})`}
           </p>
           <div className="flex flex-col">
             {connectors.map((person) => (

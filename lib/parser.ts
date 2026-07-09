@@ -70,7 +70,7 @@ interface NormalizedMediaText {
 // caption around it -> isMedia false, the "<attached: ...>" noise
 // stripped so the caption is what actually reaches stats/Claude. Either
 // way, if there was a real "<attached: filename>" reference (media-included
-// exports only — the older "omitted" placeholders never carry a filename),
+// exports only - the older "omitted" placeholders never carry a filename),
 // it's captured so the UI can look up the actual file later.
 function normalizeMediaText(rawText: string): NormalizedMediaText {
   const trimmed = rawText.trim();

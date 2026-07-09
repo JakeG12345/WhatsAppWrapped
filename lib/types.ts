@@ -6,7 +6,7 @@ export interface ChatMessage {
   text: string;
   isMedia: boolean;
   // Filename from a "<attached: X>" reference, if this message had one and
-  // the export zip included media — lets the UI look up the real image.
+  // the export zip included media - lets the UI look up the real image.
   mediaFilename?: string;
 }
 

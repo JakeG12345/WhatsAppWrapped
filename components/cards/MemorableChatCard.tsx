@@ -16,7 +16,7 @@ export default function MemorableChatCard({ moment }: { moment: MomentCandidate 
     <CardShell eyebrow="Exhibit: The Moment">
       <div>
         <p className="mono-label text-primary">{cleanDisplayCopy(moment.date)}</p>
-        <h2 className="mt-2 text-balance text-3xl font-black uppercase leading-[0.98] tracking-tight sm:text-4xl">
+        <h2 className="mt-2 text-balance text-3xl font-black uppercase leading-[0.98] tracking-normal sm:text-4xl">
           {cleanDisplayCopy(moment.title)}
         </h2>
       </div>

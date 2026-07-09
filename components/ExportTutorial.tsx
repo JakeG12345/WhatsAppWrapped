@@ -328,7 +328,7 @@ export default function ExportTutorial({ onClose }: { onClose: () => void }) {
       <div className="flex h-full w-full max-w-lg flex-col border-x border-border bg-background text-foreground">
         {/* Sheet masthead */}
         <div className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
-          <p className="mono-label text-primary">Procedure 01 — The export</p>
+          <p className="mono-label text-primary">Procedure 01 - The export</p>
           <button
             ref={closeRef}
             type="button"
@@ -340,7 +340,7 @@ export default function ExportTutorial({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-          <h2 className="text-balance text-4xl font-black uppercase leading-[0.95] tracking-tight">
+          <h2 className="text-balance text-4xl font-black uppercase leading-[0.95] tracking-normal">
             Getting the{" "}
             <span className="bg-primary px-1.5 text-primary-ink">evidence.</span>
           </h2>
@@ -407,7 +407,7 @@ export default function ExportTutorial({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="mt-6 w-full bg-primary px-4 py-3.5 text-center text-sm font-black uppercase tracking-widest text-primary-ink transition-transform hover:-translate-y-0.5"
           >
-            Got it — submit the export ↑
+            Got it - submit the export ↑
           </button>
         </div>
       </div>

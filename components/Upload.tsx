@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import ExportTutorial from "./ExportTutorial";
+import BrandMark from "./BrandMark";
 
 interface UploadProps {
   onFile: (file: File) => void;
@@ -49,13 +50,7 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
           </button>
         ) : (
           <span className="flex items-center gap-2">
-            <img
-              src="/brand/whatsapp.svg"
-              alt=""
-              width={16}
-              height={16}
-              className="h-4 w-4"
-            />
+            <BrandMark />
             <p className="mono-label text-muted">WhatsApp Wrapped</p>
           </span>
         )}
@@ -80,16 +75,10 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
         {/* Headline block */}
         <div>
           <p className="mono-label flex items-center gap-2 text-primary">
-            <img
-              src="/brand/whatsapp.svg"
-              alt="WhatsApp"
-              width={18}
-              height={18}
-              className="h-[18px] w-[18px]"
-            />
+            <BrandMark size="md" />
             The annual report
           </p>
-          <h1 className="mt-3 text-balance text-[13vw] font-black uppercase leading-[0.92] tracking-tight sm:text-6xl">
+          <h1 className="mt-3 text-balance text-[13vw] font-black uppercase leading-[0.92] tracking-normal sm:text-6xl">
             Your chat,
             <br />
             on the{" "}

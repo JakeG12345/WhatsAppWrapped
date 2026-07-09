@@ -1,4 +1,5 @@
 import type { YearSummary } from "@/lib/types";
+import BrandMark from "./BrandMark";
 
 interface YearPickerProps {
   years: YearSummary[];
@@ -21,13 +22,7 @@ export default function YearPicker({
     <main className="flex h-dvh w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between border-b border-border px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 sm:px-6">
         <span className="flex items-center gap-2">
-          <img
-            src="/brand/whatsapp.svg"
-            alt=""
-            width={16}
-            height={16}
-            className="h-4 w-4"
-          />
+          <BrandMark />
           <p className="mono-label text-muted">WhatsApp Wrapped</p>
         </span>
         <p className="mono-label text-muted">Select volume</p>
@@ -36,7 +31,7 @@ export default function YearPicker({
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col overflow-hidden px-4 sm:px-6">
         <div className="py-6">
           <p className="mono-label text-primary">Table of contents</p>
-          <h1 className="mt-2 text-balance text-4xl font-black uppercase leading-none tracking-tight">
+          <h1 className="mt-2 text-balance text-4xl font-black uppercase leading-none tracking-normal">
             Pick the era
           </h1>
         </div>
@@ -48,7 +43,7 @@ export default function YearPicker({
             className="group flex items-center justify-between gap-4 border-b border-border bg-primary px-4 py-5 text-left text-primary-ink transition-opacity hover:opacity-90"
           >
             <div className="min-w-0">
-              <p className="text-3xl font-black uppercase leading-none tracking-tight">
+              <p className="text-3xl font-black uppercase leading-none tracking-normal">
                 All time
               </p>
               <p className="mono-label mt-2 opacity-70">
@@ -73,12 +68,12 @@ export default function YearPicker({
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-3xl font-black leading-none tracking-tight tabular-nums transition-colors group-hover:text-primary">
+                  <p className="text-3xl font-black leading-none tracking-normal tabular-nums transition-colors group-hover:text-primary">
                     {y.year}
                   </p>
                   <p className="mono-label mt-2 truncate text-muted">
                     {y.memberCount} members &middot;{" "}
-                    {formatShortDate(y.dateRange.start)} –{" "}
+                    {formatShortDate(y.dateRange.start)} to{" "}
                     {formatShortDate(y.dateRange.end)}
                   </p>
                 </div>

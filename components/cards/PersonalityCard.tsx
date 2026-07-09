@@ -17,10 +17,10 @@ export default function PersonalityCard({
       {/* The certificate */}
       <div>
         <p className="mono-label text-muted">Presented to</p>
-        <p className="mt-1 border-b border-border pb-3 text-2xl font-black uppercase tracking-tight text-primary">
+        <p className="mt-1 border-b border-border pb-3 text-2xl font-black uppercase tracking-normal text-primary">
           {cleanDisplayCopy(personality.member)}
         </p>
-        <h2 className="mt-4 break-words text-balance text-[clamp(2.25rem,11vw,3.75rem)] font-black uppercase leading-[0.92] tracking-tight">
+        <h2 className="mt-4 break-words text-balance text-[clamp(2.25rem,11vw,3.75rem)] font-black uppercase leading-[0.92] tracking-normal">
           {cleanDisplayCopy(personality.archetype)}
         </h2>
         <p className="mt-4 max-w-md border-l-2 border-primary pl-4 text-base leading-relaxed text-muted">

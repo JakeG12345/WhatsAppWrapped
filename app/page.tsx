@@ -68,6 +68,7 @@ const TARGET_CHUNKS = 16;
 const MIN_CHUNK_SIZE = 150;
 const MAX_CHUNK_SIZE = 800;
 const MAX_CHUNKS = 24;
+const ALLOW_MOCK_ANALYSIS = process.env.NEXT_PUBLIC_ALLOW_MOCK_ANALYSIS === "true";
 // >= MAX_CHUNKS so extraction is always exactly one parallel round, never
 // several sequential batches - wall time is bounded by the single slowest
 // chunk call, not (chunks / concurrency) rounds of them.
@@ -243,7 +244,20 @@ export default function Home() {
         setState({ phase: "analyzing", stage, totalMessages })
       );
     } catch (err) {
-      console.warn("Falling back to mock analysis:", err);
+      if (!ALLOW_MOCK_ANALYSIS) {
+        console.warn("Analysis failed:", err);
+        setState({
+          phase: "upload",
+          error:
+            "Analysis failed before the archive could be built. Check the server API key and try again.",
+        });
+        return;
+      }
+
+      console.warn(
+        "Falling back to mock analysis because NEXT_PUBLIC_ALLOW_MOCK_ANALYSIS is true:",
+        err
+      );
       setState({ phase: "analyzing", stage: "writing", totalMessages });
       wrapped = generateMockWrappedResult(parsed.groupName, stats);
     }

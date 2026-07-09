@@ -67,7 +67,7 @@ function TopNav({
           Lobby
         </ModeButton>
         <ModeButton active={mode === "wrapped"} onClick={() => setMode("wrapped")}>
-          Story
+          Wrapper
         </ModeButton>
         <ModeButton active={mode === "museum"} onClick={() => setMode("museum")}>
           Museum
@@ -107,7 +107,7 @@ function RecapLobby({
         {/* Masthead */}
         <div className="relative z-10">
           <p className="mono-label text-primary">Archive ready &middot; {year}</p>
-          <h1 className="mt-2 text-balance text-[13vw] font-black uppercase leading-[0.9] tracking-tight sm:text-6xl">
+          <h1 className="mt-2 text-balance text-[13vw] font-black uppercase leading-[0.9] tracking-normal sm:text-6xl">
             {groupName}
           </h1>
         </div>
@@ -141,10 +141,10 @@ function RecapLobby({
             onClick={onWrapped}
             className="group flex flex-col gap-8 bg-primary p-4 text-left text-primary-ink transition-opacity hover:opacity-90"
           >
-            <span className="mono-label opacity-70">01 / Story</span>
+            <span className="mono-label opacity-70">01 / Wrapper</span>
             <span>
-              <span className="block text-2xl font-black uppercase leading-none tracking-tight">
-                Wrapped
+              <span className="block text-2xl font-black uppercase leading-none tracking-normal">
+                Wrapper
                 <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">
                   →
                 </span>
@@ -162,7 +162,7 @@ function RecapLobby({
           >
             <span className="mono-label text-muted">02 / Museum</span>
             <span>
-              <span className="block text-2xl font-black uppercase leading-none tracking-tight">
+              <span className="block text-2xl font-black uppercase leading-none tracking-normal">
                 Lore tour
                 <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">
                   →

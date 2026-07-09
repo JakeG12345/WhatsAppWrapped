@@ -9,7 +9,7 @@ export default function RunningGagCard({ gag }: { gag: RunningGagCandidate }) {
   return (
     <CardShell eyebrow="Recurring bit">
       <div className="flex items-end justify-between gap-4 border-b border-border pb-4">
-        <h2 className="min-w-0 text-balance text-3xl font-black uppercase leading-[0.98] tracking-tight sm:text-4xl">
+        <h2 className="min-w-0 text-balance text-3xl font-black uppercase leading-[0.98] tracking-normal sm:text-4xl">
           {cleanDisplayCopy(gag.name)}
         </h2>
         <p className="shrink-0 text-right">

@@ -10,6 +10,8 @@ import type {
 } from "@/lib/types";
 import type { MediaHighlight } from "@/lib/media";
 import { cleanDisplayCopy } from "@/lib/copy";
+import GameAvatar from "./GameAvatar";
+import SnapshotExportPanel from "./SnapshotPoster";
 import {
   whatsappNameColor,
   WHATSAPP_RECEIVED_BUBBLE,
@@ -17,7 +19,15 @@ import {
 } from "@/lib/whatsapp";
 
 type Direction = "up" | "down" | "left" | "right";
-type RoomId = "archive" | "canon" | "quote" | "photos" | "stats" | "gag" | "cast";
+type RoomId =
+  | "archive"
+  | "canon"
+  | "quote"
+  | "photos"
+  | "stats"
+  | "gag"
+  | "cast"
+  | "gift";
 type ExhibitKind =
   | "archive"
   | "moment"
@@ -25,7 +35,8 @@ type ExhibitKind =
   | "photos"
   | "stats"
   | "gag"
-  | "cast";
+  | "cast"
+  | "gift";
 
 interface Point {
   x: number;
@@ -84,6 +95,7 @@ const CORRIDORS: Zone[] = [
   { x: 300, y: 178, w: 680, h: 76 },
   { x: 584, y: 238, w: 112, h: 500 },
   { x: 318, y: 468, w: 646, h: 84 },
+  { x: 876, y: 760, w: 96, h: 74 },
 ];
 
 function formatCount(n: number): string {
@@ -122,6 +134,7 @@ function buildRooms(hasPhotos: boolean): Room[] {
     { id: "archive", title: "Archive Hall", label: "LOBBY", x: 456, y: 360, w: 368, h: 238, accent: "#00A884" },
     { id: "gag", title: "Joke Reliquary", label: "WING 05", x: 898, y: 388, w: 332, h: 240, accent: "#D291E4" },
     { id: "cast", title: "Cast Wing", label: "WING 06", x: 384, y: 708, w: 512, h: 166, accent: "#EF798A" },
+    { id: "gift", title: "Gift Shop", label: "SHOP", x: 956, y: 706, w: 254, h: 180, accent: "#25D366" },
   ];
 }
 
@@ -277,6 +290,18 @@ function buildExhibits(
       w: 222,
       h: 150,
       accent: "#D291E4",
+    },
+    {
+      id: "gift-counter",
+      roomId: "gift",
+      kind: "gift",
+      title: "Snapshot Counter",
+      subtitle: "Save the poster",
+      x: 1002,
+      y: 756,
+      w: 162,
+      h: 86,
+      accent: "#25D366",
     },
     ...castExhibits,
   ];
@@ -627,6 +652,20 @@ function ExhibitObject({
           </div>
         )}
 
+        {exhibit.kind === "gift" && (
+          <div className="flex h-full flex-col justify-center">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#25D366]">
+              Gift Shop
+            </p>
+            <p className="mt-2 text-xl font-black uppercase leading-none tracking-normal">
+              Poster
+            </p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8FA396]">
+              Save counter
+            </p>
+          </div>
+        )}
+
         {exhibit.kind === "cast" && (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <div
@@ -650,7 +689,7 @@ function PersonalityDetail({ personality }: { personality: PersonalityEvidence }
         <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-[#25D366]">
           {cleanDisplayCopy(personality.member)}
         </p>
-        <h3 className="mt-2 text-3xl font-black uppercase leading-tight tracking-tight">
+        <h3 className="mt-2 text-3xl font-black uppercase leading-tight tracking-normal">
           {cleanDisplayCopy(personality.archetype)}
         </h3>
         <p className="mt-3 text-sm leading-6 text-[#AEBAC1]">
@@ -710,7 +749,7 @@ function ExhibitDetail({
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8696A0]">
             {cleanDisplayCopy(wrapped.momentOfTheYear.date)}
           </p>
-          <h3 className="mt-1 text-2xl font-black uppercase leading-tight tracking-tight">
+          <h3 className="mt-1 text-2xl font-black uppercase leading-tight tracking-normal">
             {cleanDisplayCopy(wrapped.momentOfTheYear.title)}
           </h3>
         </div>
@@ -845,7 +884,7 @@ function ExhibitDetail({
     return (
       <div className="flex flex-col gap-4">
         <div>
-          <h3 className="text-3xl font-black uppercase leading-tight tracking-tight">
+          <h3 className="text-3xl font-black uppercase leading-tight tracking-normal">
             {cleanDisplayCopy(wrapped.runningGag.name)}
           </h3>
           <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-[#8696A0]">
@@ -867,6 +906,22 @@ function ExhibitDetail({
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (exhibit.kind === "gift") {
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#25D366]">
+            Gift Shop
+          </p>
+          <h3 className="mt-2 text-3xl font-black uppercase leading-tight tracking-normal">
+            Save the Wrapper
+          </h3>
+        </div>
+        <SnapshotExportPanel stats={stats} wrapped={wrapped} />
       </div>
     );
   }
@@ -978,32 +1033,10 @@ function Player({
 }) {
   return (
     <div
-      className="absolute z-30"
-      style={{ left: position.x - PLAYER_RADIUS, top: position.y - PLAYER_RADIUS }}
+      className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
+      style={{ left: position.x, top: position.y }}
     >
-      {/* shadow */}
-      <div className="absolute left-1/2 top-[30px] h-2 w-7 -translate-x-1/2 rounded-full bg-black/50 blur-[2px]" />
-      {/* body */}
-      <motion.div
-        className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-[#D9FDD3] bg-[#00A884] shadow-[0_0_44px_rgba(0,168,132,0.55)]"
-        animate={moving ? { y: [0, -3, 0] } : { y: 0 }}
-        transition={
-          moving
-            ? { duration: 0.34, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }
-            : { duration: 0.15 }
-        }
-      >
-        {/* eyes track facing direction */}
-        <div
-          className="flex gap-1.5 transition-transform duration-150"
-          style={{ transform: `translateX(${facing * 3}px)` }}
-        >
-          <span className="h-2 w-1.5 rounded-full bg-[#06130D]" />
-          <span className="h-2 w-1.5 rounded-full bg-[#06130D]" />
-        </div>
-        {/* curator cap */}
-        <span className="absolute -top-1.5 left-1/2 h-1.5 w-5 -translate-x-1/2 rounded-full bg-[#06130D]" />
-      </motion.div>
+      <GameAvatar moving={moving} facing={facing} />
     </div>
   );
 }
@@ -1046,10 +1079,12 @@ export default function MuseumExperience({
   const lastFootprintRef = useRef<Point>(START);
   const footprintIdRef = useRef(0);
   const worldRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const splashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seenRoomsRef = useRef<Set<RoomId>>(
     new Set(["archive", ...((initialVisitedRooms ?? []) as RoomId[])])
   );
+  const [viewport, setViewport] = useState({ w: 0, h: 0 });
 
   const nearestExhibit = useMemo(() => {
     let nearest: { exhibit: Exhibit; distance: number } | null = null;
@@ -1074,6 +1109,16 @@ export default function MuseumExperience({
     return () => {
       if (splashTimeoutRef.current) clearTimeout(splashTimeoutRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    function measure() {
+      const el = viewportRef.current;
+      if (el) setViewport({ w: el.clientWidth, h: el.clientHeight });
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   const inspect = useCallback((exhibit: Exhibit) => {
@@ -1242,9 +1287,12 @@ export default function MuseumExperience({
 
   const allExhibitsInspected = inspected.size === exhibits.length;
   const showCertificate = allExhibitsInspected && !celebrated && !activeExhibit;
+  const camX = clamp(player.x - viewport.w / 2, 0, Math.max(0, WORLD.w - viewport.w));
+  const camY = clamp(player.y - viewport.h * 0.54, 0, Math.max(0, WORLD.h - viewport.h));
 
   return (
     <div
+      ref={viewportRef}
       // Camera moves the world via transform; pin focus-scroll to 0,0 so
       // overlays never drift when buttons deep in the world get focused.
       onScroll={(e) => {
@@ -1279,11 +1327,11 @@ export default function MuseumExperience({
 
       {/* world */}
       <div
-        className="absolute left-1/2 top-[54%]"
+        className="absolute left-0 top-0"
         style={{
           width: WORLD.w,
           height: WORLD.h,
-          transform: `translate(${-player.x}px, ${-player.y}px)`,
+          transform: `translate3d(${-camX}px, ${-camY}px, 0)`,
         }}
         ref={worldRef}
         onPointerDown={handleFloorTap}
@@ -1370,10 +1418,10 @@ export default function MuseumExperience({
               className="font-mono text-[10px] font-bold uppercase tracking-[0.3em]"
               style={{ color: roomSplash.accent }}
             >
-              {roomSplash.label} — Discovered
+              {roomSplash.label} - Discovered
             </p>
             <p
-              className="mt-1 text-center text-4xl font-black uppercase tracking-tight text-[#E9EDE9] sm:text-5xl"
+              className="mt-1 text-center text-4xl font-black uppercase tracking-normal text-[#E9EDE9] sm:text-5xl"
               style={{ textShadow: `0 0 60px ${roomSplash.accent}99` }}
             >
               {roomSplash.title}
@@ -1386,7 +1434,7 @@ export default function MuseumExperience({
       <div className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-50 flex items-end justify-between gap-3">
         <div className="pointer-events-auto flex flex-col gap-2">
           <p className="w-fit border border-[#2A3942]/70 bg-[#06130D]/85 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-[#5E6E64] backdrop-blur-sm">
-            Tap floor or WASD to walk
+            Museum floor
           </p>
           <Controls press={press} release={release} />
         </div>
@@ -1437,7 +1485,7 @@ export default function MuseumExperience({
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-[#25D366]">
                 Certificate of completion
               </p>
-              <p className="mt-4 text-5xl font-black uppercase leading-[0.95] tracking-tight text-[#E9EDE9]">
+              <p className="mt-4 text-5xl font-black uppercase leading-[0.95] tracking-normal text-[#E9EDE9]">
                 Archive cleared
               </p>
               <p className="mt-4 text-sm leading-6 text-[#8FA396]">

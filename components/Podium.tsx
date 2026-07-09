@@ -34,7 +34,7 @@ export default function Podium({
   return (
     <CardShell eyebrow={eyebrow}>
       <div>
-        <h2 className="text-balance text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-5xl">
+        <h2 className="text-balance text-4xl font-black uppercase leading-[0.95] tracking-normal sm:text-5xl">
           {title}
         </h2>
         {description && (
@@ -50,7 +50,7 @@ export default function Podium({
           <div className="relative z-10 flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="mono-label opacity-70">No. 1</p>
-              <p className="mt-1 truncate text-3xl font-black uppercase leading-none tracking-tight">
+              <p className="mt-1 truncate text-3xl font-black uppercase leading-none tracking-normal">
                 {cleanDisplayCopy(top.name)}
               </p>
             </div>

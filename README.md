@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WhatsApp Wrapped
 
-## Getting Started
+An interactive archive for WhatsApp chat exports. Users upload a `.txt` or `.zip`
+export, the browser parses the chat locally, and the app builds:
 
-First, run the development server:
+- A Wrapper card deck with stats, quotes, moments, and awards
+- A walkable museum for each chat
+- An Archive District where multiple chat museums live together
+- Optional account storage for derived results only
+
+Raw messages are not stored. Guest archives live in localStorage. Signed-in
+archives store derived stats and generated recap data.
+
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local`:
 
-## Learn More
+```bash
+ANTHROPIC_API_KEY=...
+DATABASE_URL=postgres://...
+BETTER_AUTH_SECRET=...
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_ALLOW_MOCK_ANALYSIS=false
+```
 
-To learn more about Next.js, take a look at the following resources:
+For Vercel production, set:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `ANTHROPIC_API_KEY`
+- `DATABASE_URL`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+- `NEXT_PUBLIC_APP_URL`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Use the deployed HTTPS origin for both URL values.
+Keep `NEXT_PUBLIC_ALLOW_MOCK_ANALYSIS=false` in production so failed analysis
+does not generate fake recaps.
 
-## Deploy on Vercel
+## Checks
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run lint
+npm run build
+npx tsx scripts/test-parser.mjs
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Privacy Model
+
+- Parsing and stat calculation happen in the browser.
+- Uploaded zip media is used only for session-only object URLs.
+- Raw transcript text is sent to the analysis API for recap generation.
+- The app stores only derived results when the user is signed in.
+- Guest results remain in browser localStorage.
+
+Do not commit real WhatsApp exports or media.

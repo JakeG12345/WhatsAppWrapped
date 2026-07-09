@@ -66,7 +66,7 @@ export default function SettingsForm({
     <main className="grain relative flex min-h-dvh w-full flex-col bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10 sm:px-6">
         <p className="mono-label text-primary">Curator settings</p>
-        <h1 className="mt-2 text-balance text-5xl font-black uppercase leading-[0.9] tracking-tight">
+        <h1 className="mt-2 text-balance text-5xl font-black uppercase leading-[0.9] tracking-normal">
           Amend the record
         </h1>
 

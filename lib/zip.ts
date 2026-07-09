@@ -18,7 +18,7 @@ const IMAGE_EXTENSION_MIME: Record<string, string> = {
 
 export interface ExtractedChat {
   text: string;
-  // Raw zip bytes, kept around for a later selective media pass — decoding
+  // Raw zip bytes, kept around for a later selective media pass - decoding
   // the whole zip once and re-scanning it for a handful of chosen images
   // is cheap; eagerly decompressing every photo in a large export is not.
   zipData: Uint8Array;
@@ -27,7 +27,7 @@ export interface ExtractedChat {
 // WhatsApp's "Export chat" produces a .zip containing the transcript as a
 // .txt file, plus any attached media. This pulls just the .txt entry out
 // client-side (filtered so media inside the zip is never decompressed here)
-// — the zip never leaves the browser, same privacy guarantee as a plain
+// - the zip never leaves the browser, same privacy guarantee as a plain
 // .txt upload.
 export async function extractChatTextFromZip(file: File): Promise<ExtractedChat> {
   const buffer = await file.arrayBuffer();
@@ -43,7 +43,7 @@ export async function extractChatTextFromZip(file: File): Promise<ExtractedChat>
   }
 
   // WhatsApp zips contain exactly one chat .txt; if there happen to be
-  // several, take the largest — the real transcript, not a stray note.
+  // several, take the largest - the real transcript, not a stray note.
   const chosen = txtNames.reduce((best, name) =>
     entries[name].length > entries[best].length ? name : best
   );
@@ -52,7 +52,7 @@ export async function extractChatTextFromZip(file: File): Promise<ExtractedChat>
 }
 
 // Selectively decompresses only the named files (e.g. a sampled handful of
-// photos for a "camera roll" card) — never the whole media library, which
+// photos for a "camera roll" card) - never the whole media library, which
 // for a real export can be hundreds of megabytes.
 export function extractMediaFilesFromZip(
   zipData: Uint8Array,
