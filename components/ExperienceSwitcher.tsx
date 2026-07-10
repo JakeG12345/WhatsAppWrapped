@@ -67,7 +67,7 @@ function TopNav({
           Lobby
         </ModeButton>
         <ModeButton active={mode === "wrapped"} onClick={() => setMode("wrapped")}>
-          Wrapper
+          Wrapped
         </ModeButton>
         <ModeButton active={mode === "museum"} onClick={() => setMode("museum")}>
           Museum
@@ -141,10 +141,10 @@ function RecapLobby({
             onClick={onWrapped}
             className="group flex flex-col gap-8 bg-primary p-4 text-left text-primary-ink transition-opacity hover:opacity-90"
           >
-            <span className="mono-label opacity-70">01 / Wrapper</span>
+            <span className="mono-label opacity-70">01 / Wrapped</span>
             <span>
               <span className="block text-2xl font-black uppercase leading-none tracking-normal">
-                Wrapper
+                Wrapped
                 <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">
                   →
                 </span>
@@ -212,6 +212,7 @@ export default function ExperienceSwitcher({
           initialVisitedRooms={museumProgress?.discoveredWings}
           initialInspected={museumProgress?.inspectedExhibits}
           onProgressChange={onMuseumProgressChange}
+          onExit={onReset}
         />
       )}
     </div>

@@ -143,6 +143,11 @@ export default function Upload({ onFile, error, onBack, userName }: UploadProps)
           </p>
         )}
 
+        <p className="mt-3 max-w-sm font-mono text-[10px] leading-relaxed text-muted">
+          On desktop, use the WhatsApp Desktop app to export, then upload the
+          .zip or .txt here.
+        </p>
+
         <button
           type="button"
           onClick={() => setShowTutorial(true)}

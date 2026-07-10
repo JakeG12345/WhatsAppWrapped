@@ -82,6 +82,8 @@ interface MuseumExperienceProps {
   initialInspected?: string[];
   /** Fired whenever discovery progress changes, for persistence. */
   onProgressChange?: (visitedRooms: string[], inspected: string[]) => void;
+  /** Leave the museum without using the top nav. */
+  onExit?: () => void;
 }
 
 const WORLD = { w: 1280, h: 920 };
@@ -93,10 +95,18 @@ const TORCH_RADIUS = 300;
 
 const CORRIDORS: Zone[] = [
   { x: 300, y: 178, w: 680, h: 76 },
-  { x: 584, y: 238, w: 112, h: 500 },
+  { x: 584, y: 238, w: 112, h: 532 },
   { x: 318, y: 468, w: 646, h: 84 },
-  { x: 876, y: 760, w: 96, h: 74 },
+  { x: 836, y: 760, w: 190, h: 74 },
 ];
+
+const DOORWAYS: Zone[] = [
+  { x: 584, y: 704, w: 112, h: 10 },
+  { x: 890, y: 760, w: 12, h: 74 },
+  { x: 950, y: 760, w: 12, h: 74 },
+];
+
+const EXIT_DOOR: Zone = { x: 596, y: 562, w: 88, h: 38 };
 
 function formatCount(n: number): string {
   return n.toLocaleString();
@@ -475,6 +485,49 @@ function CorridorView({ zone }: { zone: Zone }) {
         }}
       />
     </div>
+  );
+}
+
+function DoorwayView({ zone }: { zone: Zone }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute z-[1] bg-[#0C1310]"
+      style={{ left: zone.x, top: zone.y, width: zone.w, height: zone.h }}
+    />
+  );
+}
+
+function ExitDoor({
+  isNear,
+  onExit,
+}: {
+  isNear: boolean;
+  onExit?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onExit}
+      className="absolute z-20 border-2 border-[#25D366] bg-[#06130D] text-left shadow-[0_0_34px_rgba(37,211,102,0.18)] transition-transform hover:-translate-y-0.5"
+      style={{
+        left: EXIT_DOOR.x,
+        top: EXIT_DOOR.y,
+        width: EXIT_DOOR.w,
+        height: EXIT_DOOR.h,
+      }}
+      aria-label="Exit to district"
+    >
+      <span className="absolute inset-x-2 top-1 h-2 bg-[#25D366]" />
+      <span className="absolute inset-x-3 bottom-1 font-mono text-[8px] font-bold uppercase tracking-[0.18em] text-[#25D366]">
+        District
+      </span>
+      {isNear && (
+        <span className="mono-label absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap bg-[#25D366] px-2 py-1 text-[#06130D]">
+          Exit museum
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -918,7 +971,7 @@ function ExhibitDetail({
             Gift Shop
           </p>
           <h3 className="mt-2 text-3xl font-black uppercase leading-tight tracking-normal">
-            Save the Wrapper
+            Save the Wrapped
           </h3>
         </div>
         <SnapshotExportPanel stats={stats} wrapped={wrapped} />
@@ -1048,6 +1101,7 @@ export default function MuseumExperience({
   initialVisitedRooms,
   initialInspected,
   onProgressChange,
+  onExit,
 }: MuseumExperienceProps) {
   const hasPhotos = mediaHighlights.length > 0;
   const rooms = useMemo(() => buildRooms(hasPhotos), [hasPhotos]);
@@ -1095,6 +1149,10 @@ export default function MuseumExperience({
     }
     return nearest?.exhibit ?? null;
   }, [exhibits, player]);
+  const nearExit = useMemo(
+    () => Boolean(onExit && distance(player, centerOf(EXIT_DOOR)) < 90),
+    [onExit, player]
+  );
 
   useEffect(() => {
     sheetOpenRef.current = activeExhibit !== null;
@@ -1258,10 +1316,17 @@ export default function MuseumExperience({
         setActiveExhibit(null);
         return;
       }
-      if ((event.key === "Enter" || event.key === " ") && nearestExhibit && !activeExhibit) {
-        event.preventDefault();
-        inspect(nearestExhibit);
-        return;
+      if ((event.key === "Enter" || event.key === " ") && !activeExhibit) {
+        if (nearExit) {
+          event.preventDefault();
+          onExit?.();
+          return;
+        }
+        if (nearestExhibit) {
+          event.preventDefault();
+          inspect(nearestExhibit);
+          return;
+        }
       }
 
       const direction = getDirectionFromKey(event.key);
@@ -1283,7 +1348,7 @@ export default function MuseumExperience({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [activeExhibit, inspect, nearestExhibit]);
+  }, [activeExhibit, inspect, nearExit, nearestExhibit, onExit]);
 
   const allExhibitsInspected = inspected.size === exhibits.length;
   const showCertificate = allExhibitsInspected && !celebrated && !activeExhibit;
@@ -1353,6 +1418,10 @@ export default function MuseumExperience({
           <RoomView key={room.id} room={room} visited={visitedRooms.has(room.id)} />
         ))}
 
+        {DOORWAYS.map((zone, index) => (
+          <DoorwayView key={index} zone={zone} />
+        ))}
+
         {/* footprints */}
         {footprints.map((print, index) => (
           <span
@@ -1378,6 +1447,8 @@ export default function MuseumExperience({
             onInspect={inspect}
           />
         ))}
+
+        {onExit && <ExitDoor isNear={nearExit} onExit={onExit} />}
 
         <Player position={player} facing={facing} moving={moving} />
 
@@ -1441,6 +1512,19 @@ export default function MuseumExperience({
 
         <div className="pointer-events-auto flex max-w-[11rem] flex-col items-end gap-2">
           <AnimatePresence>
+            {nearExit && !activeExhibit && (
+              <motion.div
+                className="border border-[#25D366] bg-[#06130D]/94 px-3 py-2 text-right shadow-lg backdrop-blur-md"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+              >
+                <p className="truncate text-xs font-bold text-[#25D366]">District doors</p>
+                <p className="truncate font-mono text-[10px] text-[#8696A0]">
+                  Return to the map
+                </p>
+              </motion.div>
+            )}
             {nearestExhibit && !activeExhibit && (
               <motion.div
                 className="border border-[#2A3942] bg-[#06130D]/94 px-3 py-2 text-right shadow-lg backdrop-blur-md"
@@ -1457,11 +1541,14 @@ export default function MuseumExperience({
           </AnimatePresence>
           <button
             type="button"
-            disabled={!nearestExhibit}
-            onClick={() => nearestExhibit && inspect(nearestExhibit)}
+            disabled={!nearExit && !nearestExhibit}
+            onClick={() => {
+              if (nearExit) onExit?.();
+              else if (nearestExhibit) inspect(nearestExhibit);
+            }}
             className="bg-[#25D366] px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#06130D] shadow-[0_0_40px_rgba(37,211,102,0.3)] transition disabled:border disabled:border-[#2A3942] disabled:bg-[#141F19]/88 disabled:text-[#5E6E64] disabled:shadow-none"
           >
-            Inspect
+            {nearExit ? "Exit museum" : "Inspect"}
           </button>
         </div>
       </div>

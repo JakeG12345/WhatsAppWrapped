@@ -4,8 +4,8 @@
 // museum building, roads connect them through a central plaza, and people
 // who appear in multiple chats stand as statues along the way.
 //
-// Engine patterns (rAF movement, tap-to-move, fog-of-war, minimap, discovery
-// splashes) are shared with MuseumExperience - this is the outdoor level.
+// Engine patterns (rAF movement, tap-to-move, minimap, discovery splashes)
+// are shared with MuseumExperience - this is the outdoor level.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ArchiveEntry } from "@/lib/archive";
@@ -23,7 +23,6 @@ const PLAZA = { x: WORLD.w / 2, y: WORLD.h / 2 };
 const PLAZA_R = 170;
 const SPEED = 4.6;
 const INTERACT_RADIUS = 96;
-const TORCH_RADIUS = 240;
 
 const BUILDING = { w: 300, h: 210 };
 
@@ -152,7 +151,6 @@ export default function DistrictExperience({
   const [moving, setMoving] = useState(false);
   const [facing, setFacing] = useState<1 | -1>(1);
   const [footprints, setFootprints] = useState<Footprint[]>([]);
-  const [lightsOn, setLightsOn] = useState(false);
   const [sheet, setSheet] = useState<SheetState>({ kind: "none" });
   const [visitedLots, setVisitedLots] = useState<Set<string>>(() => new Set());
   const [splash, setSplash] = useState<{ title: string; sub: string; accent: string } | null>(null);
@@ -592,15 +590,6 @@ export default function DistrictExperience({
           <GameAvatar moving={moving} facing={facing} />
         </div>
 
-        {/* fog of war */}
-        {!lightsOn && (
-          <div
-            className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-500"
-            style={{
-              background: `radial-gradient(circle ${TORCH_RADIUS}px at ${player.x}px ${player.y}px, transparent 0%, rgba(37,211,102,0.04) 55%, rgba(2,6,3,0.94) 100%)`,
-            }}
-          />
-        )}
       </div>
 
       {/* ------------------------------------------------------ discovery splash */}
@@ -646,17 +635,6 @@ export default function DistrictExperience({
               style={{ left: (player.x / WORLD.w) * 108, top: (player.y / WORLD.h) * 72 }}
             />
           </div>
-          <button
-            type="button"
-            onClick={() => setLightsOn((v) => !v)}
-            className={`mono-label border px-2.5 py-1.5 shadow-lg backdrop-blur-md transition-colors ${
-              lightsOn
-                ? "border-[#25D366] bg-[#25D366] text-[#06130D]"
-                : "border-[#242C25] bg-[#0A0E0B]/92 text-[#7D8880] hover:text-[#E9EDE9]"
-            }`}
-          >
-            {lightsOn ? "Lights on" : "Lights off"}
-          </button>
         </div>
       </div>
 

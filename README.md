@@ -3,7 +3,7 @@
 An interactive archive for WhatsApp chat exports. Users upload a `.txt` or `.zip`
 export, the browser parses the chat locally, and the app builds:
 
-- A Wrapper card deck with stats, quotes, moments, and awards
+- A Wrapped card deck with stats, quotes, moments, and awards
 - A walkable museum for each chat
 - An Archive District where multiple chat museums live together
 - Optional account storage for derived results only
